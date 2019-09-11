@@ -1,0 +1,45 @@
+diff --git a/drivers/video/fbdev/core/fbcon.c b/drivers/video/fbdev/core/fbcon.c
+index 04612f9..ebd6c86 100644
+--- a/drivers/video/fbdev/core/fbcon.c
++++ b/drivers/video/fbdev/core/fbcon.c
+@@ -584,6 +584,7 @@ static void fbcon_prepare_logo(struct vc_data *vc, struct fb_info *info,
+ 	if (fb_get_color_depth(&info->var, &info->fix) == 1)
+ 		erase &= ~0x400;
+ 	logo_height = fb_prepare_logo(info, ops->rotate);
++    logo_height += (info->var.yres / 2) - (logo_height / 2);
+ 	logo_lines = DIV_ROUND_UP(logo_height, vc->vc_font.height);
+ 	q = (unsigned short *) (vc->vc_origin +
+ 				vc->vc_size_row * rows);
+diff --git a/drivers/video/fbdev/core/fbmem.c b/drivers/video/fbdev/core/fbmem.c
+index be8c43d..7e49aa2 100644
+--- a/drivers/video/fbdev/core/fbmem.c
++++ b/drivers/video/fbdev/core/fbmem.c
+@@ -499,20 +499,22 @@ static int fb_show_logo_line(struct fb_info *info, int rotate,
+ 		image.data = logo_new;
+ 		fb_set_logo(info, logo, logo_new, fb_logo.depth);
+ 	}
+-
+-	image.dx = 0;
+-	image.dy = y;
++    
+ 	image.width = logo->width;
+ 	image.height = logo->height;
+-
++    
++    // Here, we're centering our image.
++    image.dx = (info->var.xres / 2) - (image.width / 2);
++    image.dy = (info->var.yres / 2) - (image.height / 2);
++    
+ 	if (rotate) {
+ 		logo_rotate = kmalloc(logo->width *
+ 				      logo->height, GFP_KERNEL);
+ 		if (logo_rotate)
+ 			fb_rotate_logo(info, logo_rotate, &image, rotate);
+ 	}
+-
+-	fb_do_show_logo(info, &image, rotate, n);
++    
++	fb_do_show_logo(info, &image, rotate, 1);
+ 
+ 	kfree(palette);
+ 	if (saved_pseudo_palette != NULL)

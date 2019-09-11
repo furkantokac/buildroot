@@ -1,0 +1,1 @@
+root=/dev/mmcblk0p2 console=tty3 vt.global_cursor_default=0 rootfstype=ext4 rootwait 8250.nr_uarts=1

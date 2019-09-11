@@ -1,0 +1,25 @@
+---> Raspberry Pi
+
+Standalone partitioning explained 
+https://github.com/raspberrypi/noobs/wiki/Standalone-partitioning-explained
+
+Analysis of Boot Time Reduction techniques in Linux 2009
+http://www.diva-portal.org/smash/get/diva2:235591/ATTACHMENT01
+
+Linux Quick Boot ELC 2014
+https://elinux.org/images/9/9c/00-linux-quick-boot.pdf
+
+Reducing Boot Time: Techniques for Fast Booting 2009
+https://www.nxp.com/files-static/training_pdf/VFTF09_MONTAVISTA_LINUXBOOT.pdf
+
+Fast Boot 2016
+https://www.slideshare.net/szlin/fast-boot-61763505
+
+Official Raspberry Firmware
+https://github.com/raspberrypi/firmware
+
+The Right Approach to Minimal Boot Times
+https://elinux.org/images/f/f7/RightApproachMinimalBootTimes.pdf
+
+Device Tree for Dummies
+https://bootlin.com/pub/conferences/2013/elce/petazzoni-device-tree-dummies/petazzoni-device-tree-dummies.pdf

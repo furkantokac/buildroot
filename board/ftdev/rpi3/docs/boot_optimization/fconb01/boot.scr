@@ -1,0 +1,6 @@
+mmc dev 0
+setenv fdtfile bcm2837-rpi-3-b.dtb
+setenv bootargs earlyprintk console=tty0 console=ttyAMA0 root=/dev/mmcblk0p2 rootfstype=ext4 mem=1G rootwait
+fatload mmc 0:1 ${loadaddr} image
+fatload mmc 0:1 ${fdt_addr_r} ${fdtfile}
+booti ${loadaddr} - ${fdt_addr_r}

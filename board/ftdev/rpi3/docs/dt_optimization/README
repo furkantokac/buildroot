@@ -1,0 +1,8 @@
+### Compiling
+1- Arrange the device tree in .dts file
+2- dtc -O dtb -o bcm2710-rpi-3-b.dtb bcm2710-rpi-3-b.dts
+
+
+### Note
+- dtb to dts : dtc -I dtb -O dts bcm2710-rpi-3-b.dtb
+- dts to dtb : dtc -O dtb -o bcm2710-rpi-3-b.dtb bcm2710-rpi-3-b.dts

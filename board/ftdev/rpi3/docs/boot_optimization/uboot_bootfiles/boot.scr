@@ -1,0 +1,6 @@
+mmc dev 0
+setenv fdtfile nbcm2710-rpi-3-b.dtb
+setenv bootargs 8250.nr_uarts=1 root=/dev/mmcblk0p2 rootfstype=ext4 rootwait
+fatload mmc 0:1 ${loadaddr} zImage
+fatload mmc 0:1 ${fdt_addr_r} ${fdtfile}
+bootz ${loadaddr} - ${fdt_addr_r}

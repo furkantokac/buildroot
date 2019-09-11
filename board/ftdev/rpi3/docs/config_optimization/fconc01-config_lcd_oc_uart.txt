@@ -1,0 +1,24 @@
+#---> Boot
+kernel=zImage
+disable_overscan=1
+
+#---> XPT2046 LCD Settings
+#---- 4.3inch, 480x272
+hdmi_group=2
+hdmi_mode=87
+hdmi_timings=480 0 1 41 2 272 0 2 10 2 0 0 0 60 0 9009000 3
+hdmi_drive=1
+
+#--> OverClock
+arm_freq=1350
+core_freq=500
+over_voltage=5
+sdram_freq=500
+disable_splash=1
+force_turbo=1
+boot_delay=0
+initial_turbo=1
+
+#---> Custom
+enable_uart=1
+avoid_warnings=1

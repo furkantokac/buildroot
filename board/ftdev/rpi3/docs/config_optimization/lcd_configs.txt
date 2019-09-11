@@ -1,0 +1,18 @@
+##### Common LCD Settings
+#---- Use the following settngs when it is necessary
+max_usb_current=1   # To increase USB current. Use this if the display is unstable.
+display_rotate=1    # Use this to rotate the display.
+
+##### XPT2046 LCD Settings
+#---- 4.3", 480x272
+hdmi_group=2
+hdmi_mode=87
+hdmi_timings=480 0 1 41 2 272 0 2 10 2 0 0 0 60 0 9009000 3
+hdmi_drive=1
+
+##### Adafruit 5" & 7"
+#---- 5" 7", 800x480
+hdmi_group=2
+hdmi_mode=87
+hdmi_cvt=800 480 60 6 0 0 0
+hdmi_drive=1
