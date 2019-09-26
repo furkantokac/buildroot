@@ -7,8 +7,8 @@ set -e
 ###
 ### Params
 ### 
-ROOTFS_PATH="/this/is/rootfs/dir"
-BOOT_PATH="/this/is/boot/dir"
+ROOTFS_PATH="/this/is/rootfs/dir/"
+BOOT_PATH="/this/is/boot/dir/"
 
 ROOTFS_TAR_FILE="rootfs.tar"
 
@@ -51,7 +51,7 @@ Get help                : ./update.sh -h
 ###
 fun_updateRootfs()
 {
-    sudo rm -rf $ROOTFS_PATH
+    sudo rm -rf $ROOTFS_PATH*
     sudo tar xf $ROOTFS_TAR_FILE -C $ROOTFS_PATH
 }
 
