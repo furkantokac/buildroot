@@ -19,7 +19,7 @@ if [ -z ${FILENAME+x} ]
 then
     echo ">>> Error! No file specified."
     echo ">>> Usage:"
-    echo "  FILENAME=filename.png ./pngtoppm.sh"
+    echo "  FILENAME=filename.png ./convert-to-ppm.sh"
     exit
 fi
 
