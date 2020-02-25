@@ -6,9 +6,9 @@ enable_uart=1
 disable_splash=1
 
 #--> OverClock
-sdram_freq=700
-over_voltage=6
-initial_turbo=1
-arm_freq=1400
-core_freq=600
-force_turbo=1
+#sdram_freq=700
+#initial_turbo=1
+#force_turbo=1
+#over_voltage=6
+#arm_freq=1400
+#core_freq=600

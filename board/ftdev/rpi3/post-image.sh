@@ -10,9 +10,9 @@ BOARD_NAME="$(basename ${BOARD_DIR})"
 echo "[7m>>>   Arranging fastboot files...[27m"
 
 CUSTOM_CONFIG="${BOARD_DIR}/custom_files/config.txt"
-CUSTOM_CMDLINE="${BOARD_DIR}/custom_files/cmdline.txt"
-CUSTOM_BOOTCODE="${BINARIES_DIR}/rpi-firmware/bootcode.bin" # Using same bootcode.bin
-CUSTOM_STARTELF="${BINARIES_DIR}/rpi-firmware/start.elf"    # Using same start.elf
+CUSTOM_CMDLINE="${BINARIES_DIR}/rpi-firmware/cmdline.txt"      # Using original cmdline.txt
+CUSTOM_BOOTCODE="${BINARIES_DIR}/rpi-firmware/bootcode.bin" # Using original bootcode.bin
+CUSTOM_STARTELF="${BINARIES_DIR}/rpi-firmware/start.elf"    # Using original start.elf
 CUSTOM_OUTPUT_DIR="${BINARIES_DIR}/custom"
 
 # Find where is the DTB
