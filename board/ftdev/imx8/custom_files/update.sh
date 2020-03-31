@@ -5,6 +5,12 @@ set -e
 
 
 ###
+### Init
+###
+cp fsl-imx8qm-apalis-eval.dtb fsl-imx8qm-apalis.dtb
+
+
+###
 ### Params
 ### 
 ROOTFS_PATH="/this/is/rootfs/dir/"
@@ -12,9 +18,10 @@ BOOT_PATH="/this/is/boot/dir/"
 
 ROOTFS_TAR_FILE="rootfs.tar"
 
-DEVICETREE_FILES="fsl-imx8qm-apalis-eval.dtb fsl-imx8qm-apalis-ixora-v1.1.dtb"
+DEVICETREE_FILES="fsl-imx8qm-apalis.dtb"
 KERNEL_IMAGE="Image"
 FIRMWARE_FILES="dpfw.bin hdmitxfw.bin boot.scr"
+
 
 ###
 ### -h
