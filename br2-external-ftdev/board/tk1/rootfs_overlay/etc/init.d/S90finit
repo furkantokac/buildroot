@@ -5,6 +5,10 @@
 echo "performance" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
 
 
+# Run Xorg
+su root -l -c "/usr/bin/Xorg" &
+
+
 # Set Volume
 alsactl init
 amixer sset 'PCM' 100%
@@ -20,11 +24,3 @@ hwclock -s -f /dev/rtc1     #  hardware -> system clock
 # Enable CAN0
 ip link set can0 type can bitrate 500000
 ip link set can0 up
-
-
-# Run Xorg
-su root -l -c "/usr/bin/Xorg" &
-
-
-# Run App
-su root -l -c "DISPLAY=:0.0 /root/app --platform xcb" &
