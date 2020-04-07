@@ -41,7 +41,7 @@ cd aaabuild
              2>&1 | tee configure.log
 
 make -j8
-make install
+make -j8 install
 
 echo -e "#######################DONE##############################################\n"
 echo ">>> Your qmake is ready on './output/qt/qt-everywhere-src-$QT_FULL_VERSION/aaaout/bin/qmake'"
