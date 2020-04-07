@@ -1,0 +1,14 @@
+config BR2_PACKAGE_VISIONWORKS_TRACKING
+	bool "visionworks-tracking"
+	default y
+	select BR2_PACKAGE_CUDA
+	depends on BR2_PACKAGE_VISIONWORKS
+	help
+		NVIDIA(R) VisionWorks(TM) Object Tracker is a library of
+		computer vision primitives with framework optimized for
+		NVIDIA platforms built on top of NVIDIA(R)
+		VisionWorks(TM) and extends its API. VisionWorks Object
+		Tracker provides general Object Tracker interface and
+		implements Keypoint Object Tracker algorithm.
+
+		https://developer.nvidia.com/embedded/visionworks

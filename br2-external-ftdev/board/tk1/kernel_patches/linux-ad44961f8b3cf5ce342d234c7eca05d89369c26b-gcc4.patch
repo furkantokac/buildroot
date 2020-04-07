@@ -1,0 +1,42 @@
+diff --git a/drivers/net/can/apalis-tk1-k20-can.c b/drivers/net/can/apalis-tk1-k20-can.c
+index 2a61036a..e3e19cdd 100644
+--- a/drivers/net/can/apalis-tk1-k20-can.c
++++ b/drivers/net/can/apalis-tk1-k20-can.c
+@@ -142,6 +142,7 @@ static void apalis_tk1_k20_can_hw_tx(struct net_device *net,
+ 
+ static int apalis_tk1_k20_can_hw_rx(struct net_device *net, int buf_idx)
+ {
++    int i = 0;
+ 	struct apalis_tk1_k20_priv *priv = netdev_priv(net);
+ 	struct sk_buff *skb;
+ 	struct can_frame *frame;
+@@ -161,7 +162,7 @@ static int apalis_tk1_k20_can_hw_rx(struct net_device *net, int buf_idx)
+ 				     CAN_TRANSFER_BUF_LEN * frame_available);
+ 	apalis_tk1_k20_unlock(priv->apalis_tk1_k20);
+ 
+-	for (int i = 0; i < frame_available; i++) {
++	for (i = 0; i < frame_available; i++) {
+ 		skb = alloc_can_skb(priv->net, &frame);
+ 		if (!skb) {
+ 			dev_err(&net->dev, "cannot allocate RX skb\n");
+diff --git a/drivers/video/tegra/dc/of_dc.c b/drivers/video/tegra/dc/of_dc.c
+index 57ebf761..ba1ef9e5 100644
+--- a/drivers/video/tegra/dc/of_dc.c
++++ b/drivers/video/tegra/dc/of_dc.c
+@@ -248,6 +248,7 @@ parse_tmds_fail:
+ 
+ static u64 parse_dt_lvds_drive_strength(struct device_node *np)
+ {
++	int i = 0;
+ 	u32 temp[5];
+ 	u64 drive_strength = 0;
+ 
+@@ -257,7 +258,7 @@ static u64 parse_dt_lvds_drive_strength(struct device_node *np)
+ 		return 0;
+ 	}
+ 
+-	for (int i = 0; i < 5;i++) {
++	for (i = 0; i < 5;i++) {
+ 		if (temp[i] < 0x100) {
+ 			drive_strength += ((u64)temp[i] << i*8);
+ 		} else {

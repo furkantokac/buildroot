@@ -1,0 +1,43 @@
+If python does not detect an usable openssl installation for _hashlib,
+it uses internal implementation of common hash algorithms instead.
+
+This modifies the configure.ac patch to also disable _ssl and _hashlib
+if --disable-ssl is used.
+
+It must also modify setup.py to force enabling the internal
+implementation of hash algorithms if _hashlib is disabled, otherwise, if
+an usable openssl installation is detected, it will not compile
+them and python will end up with no hash algorithm implementation at all,
+breaking host-python-pycrypto and its reverse-dependencies like crda.
+
+Signed-off-by: Nicolas Cavallari <nicolas.cavallari@green-communications.fr>
+Index: b/setup.py
+===================================================================
+--- a/setup.py
++++ b/setup.py
+@@ -863,6 +863,12 @@ class PyBuildExt(build_ext):
+         have_usable_openssl = (have_any_openssl and
+                                openssl_ver >= min_openssl_ver)
+ 
++        if '_hashlib' in disabled_module_list:
++            # Force using the non-openssl fallbacks _md5 and _sha*.
++            have_any_openssl = False
++            have_usable_openssl = False
++            openssl_ver = 0
++
+         if have_any_openssl:
+             if have_usable_openssl:
+                 # The _hashlib module wraps optimized implementations
+Index: b/configure.ac
+===================================================================
+--- a/configure.ac
++++ b/configure.ac
+@@ -17,7 +18,7 @@ Index: b/configure.ac
+ AC_ARG_ENABLE(ssl,
+ 	AS_HELP_STRING([--disable-ssl], [disable SSL]),
+ 	[ if test "$enableval" = "no"; then
+-    	     DISABLED_EXTENSIONS="${DISABLED_EXTENSIONS} ssl"
++    	     DISABLED_EXTENSIONS="${DISABLED_EXTENSIONS} ssl _ssl _hashlib"
+   	  fi])
+ 
+ AC_ARG_ENABLE(dbm,

@@ -1,0 +1,27 @@
+#!/bin/sh
+
+do_stop() {
+        test "x`cat /sys/kernel/kexec_loaded`y" = "x1y" || exit 0
+        test -x /usr/sbin/kexec || exit 0
+
+        echo "Restarting with kexec."
+        /usr/sbin/kexec -e
+        echo "kexec failed"
+        return 1
+}
+
+case "$1" in
+  restart|reload)
+        echo "$0: action $1 not supported"
+        exit 3
+        ;;
+  start)
+        ;;
+  stop)
+        do_stop
+        ;;
+  *)
+        echo "$0: Usage: $0 stop"
+        exit 3
+        ;;
+esac

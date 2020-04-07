@@ -1,0 +1,7 @@
+config BR2_PACKAGE_NVIDIA_TEGRASTATS
+	bool "tegrastats"
+	help
+		The tegrastats system monitoring utility as distributed
+		with L4T.
+
+		https://developer.nvidia.com/linux-tegra-rel-21

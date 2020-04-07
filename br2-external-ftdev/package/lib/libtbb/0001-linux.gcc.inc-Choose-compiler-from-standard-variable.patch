@@ -1,0 +1,32 @@
+From 66196e6705d75653279cff8b4a4cb1a676175c6d Mon Sep 17 00:00:00 2001
+From: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+Date: Fri, 20 Jan 2017 16:55:00 +0100
+Subject: [PATCH] linux.gcc.inc: Choose compiler from standard variables CC and
+ CXX
+
+Rather than hard-coding the compiler variables CPLUS and CONLY to g++
+and gcc, just pick up CXX and CC.
+
+Signed-off-by: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+---
+ build/linux.gcc.inc | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/build/linux.gcc.inc b/build/linux.gcc.inc
+index b4faddc..7668a57 100644
+--- a/build/linux.gcc.inc
++++ b/build/linux.gcc.inc
+@@ -40,8 +40,8 @@ DYLIB_KEY = -shared
+ EXPORT_KEY = -Wl,--version-script,
+ LIBDL = -ldl
+ 
+-CPLUS = g++
+-CONLY = gcc
++CPLUS = $(CXX)
++CONLY = $(CC)
+ LIB_LINK_FLAGS = $(DYLIB_KEY) -Wl,-soname=$(BUILDING_LIBRARY)
+ LIBS += -lpthread -lrt
+ LINK_FLAGS = -Wl,-rpath-link=. -rdynamic
+-- 
+2.1.4
+

@@ -1,0 +1,10 @@
+config BR2_PACKAGE_EEUPDATE32
+	bool "eeupdate32"
+	select BR2_PACKAGE_QEMU_I386_LIBC if !BR2_i386
+	select BR2_PACKAGE_QEMU if !BR2_i386
+	help
+	  Intel eeprom update utility for ethernet controllers.
+
+	  The binary installed by this package is not publicly available.
+	  Please contact your Intel support representative to get access to
+	  the eeupdate32 binary, if required.

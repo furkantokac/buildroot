@@ -1,0 +1,20 @@
+config BR2_PACKAGE_IRQBALANCE_IMX
+	bool "irqbalance-imx"
+	depends on BR2_arm
+	depends on !BR2_PACKAGE_IRQBALANCE
+	help
+	  Irqbalance is a daemon to help balance the cpu load generated
+	  by interrupts across all of a systems cpus.
+	  Irqbalance identifies the highest volume interrupt sources,
+	  and isolates them to a single unique cpu, so that load is
+	  spread as much as possible over an entire processor set, while
+	  minimizing cache hit rates for irq handlers.
+
+	  The standard upstream package is broken on ARM; this package
+	  is a fork that's working on that platform.
+
+	  https://github.com/dv1/irqbalanced
+
+comment "irqbalance-imx conflicts with irqbalance"
+	depends on BR2_arm
+	depends on BR2_PACKAGE_IRQBALANCE

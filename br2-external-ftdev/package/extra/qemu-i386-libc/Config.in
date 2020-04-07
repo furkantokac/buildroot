@@ -1,0 +1,4 @@
+config BR2_PACKAGE_QEMU_I386_LIBC
+	bool "qemu-i386-libc"
+	help
+	  i386 libc for use with qemu

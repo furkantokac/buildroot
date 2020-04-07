@@ -1,0 +1,6 @@
+source "$BR2_EXTERNAL/package/Config.in"
+
+# Mark qemu as supported on ARM. This flag was not set in buildroot 2015.11,
+# so we add it from here.
+config BR2_PACKAGE_QEMU_ARCH_SUPPORTS_TARGET
+	default y if BR2_arm

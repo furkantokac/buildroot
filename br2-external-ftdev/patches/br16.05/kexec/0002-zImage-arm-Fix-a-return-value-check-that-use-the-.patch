@@ -1,0 +1,30 @@
+From 6c7722b4935aaf12634a770d330fea3875cf58d7 Mon Sep 17 00:00:00 2001
+From: Alban Bedel <alban.bedel@avionic-design.de>
+Date: Wed, 30 Mar 2016 12:24:14 +0200
+Subject: [PATCH v2 1/2] zImage-arm: Fix a return value check that use the
+ wrong variable
+
+When looking for a hole to put the initrd in the error check used the
+wrong variable.
+
+Signed-off-by: Alban Bedel <alban.bedel@avionic-design.de>
+---
+ kexec/arch/arm/kexec-zImage-arm.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/kexec/arch/arm/kexec-zImage-arm.c b/kexec/arch/arm/kexec-zImage-arm.c
+index d85ab9b..0ac194d 100644
+--- a/kexec/arch/arm/kexec-zImage-arm.c
++++ b/kexec/arch/arm/kexec-zImage-arm.c
+@@ -529,7 +529,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
+ 			unsigned long initrd_base_new = locate_hole(info,
+ 					hole_size, page_size,
+ 					initrd_base, ULONG_MAX, INT_MAX);
+-			if (base == ULONG_MAX)
++			if (initrd_base_new == ULONG_MAX)
+ 				return -1;
+ 			initrd_base = initrd_base_new;
+ 		}
+-- 
+2.8.0
+

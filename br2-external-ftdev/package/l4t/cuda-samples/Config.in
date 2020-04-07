@@ -1,0 +1,16 @@
+config BR2_PACKAGE_CUDA_SAMPLES
+	bool "cuda-samples"
+	select BR2_PACKAGE_CUDA
+	select BR2_PACKAGE_LIBGLU
+	select BR2_PACKAGE_LIBGLEW
+	select BR2_PACKAGE_LIBFREEGLUT
+	select BR2_PACKAGE_XLIB_LIBX11
+	select BR2_PACKAGE_XLIB_LIBXI
+	select BR2_PACKAGE_XLIB_LIBXMU
+	depends on BR2_PACKAGE_HAS_LIBGL
+	depends on BR2_HOST_CUDA_CROSS_TOOLCHAIN
+	help
+		CUDA example programs by NVIDIA
+
+comment "cuda-samples require libgl and cuda cross-compiling host toolchain"
+	depends on !BR2_PACKAGE_HAS_LIBGL || !BR2_HOST_CUDA_CROSS_TOOLCHAIN

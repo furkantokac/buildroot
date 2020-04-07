@@ -1,0 +1,110 @@
+From 43f3612680990e17bc19d695907703c9f3fc1405 Mon Sep 17 00:00:00 2001
+From: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+Date: Mon, 2 Nov 2015 12:32:04 +0100
+Subject: [PATCH] nvidia-islandgl: Add a wrapper script
+
+Add a wrapper script that provides a standard command line option
+interface for the islandGL demo and adjusts the window size to
+fullscreen by default.
+
+Signed-off-by: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+---
+ nvidia-islandGL | 86 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 86 insertions(+)
+ create mode 100644 nvidia-islandGL
+
+diff --git a/nvidia-islandGL b/nvidia-islandGL
+new file mode 100644
+index 0000000..171b8e2
+--- /dev/null
++++ b/nvidia-islandGL
+@@ -0,0 +1,86 @@
++#!/bin/sh
++
++self=${0##*/}
++default_speed="0.07"
++default_geometry="1920x1080+0+0"
++
++libdir=/usr/lib/$self
++datadir=/usr/share/$self
++
++# The Nvidia video libraries are found via LD_LIBRARY_PATH, which is set
++# for login shells.  But, if /bin/sh is provided by busybox, executing
++# it drops LD_LIBRARY_PATH because busybox is suid.
++# Restore LD_LIBRARY_PATH by explicitly re-initializing the shell.
++. /etc/profile
++
++warn() { echo "$self: $*" >&2; }
++die()  { warn "$*"; exit 1; }
++
++usage() {
++	cat << EOF
++Usage: $self [--geometry resolution] [--speed factor]
++Options:
++	--speed		A decimal value between 0 and 1, default: $default_speed
++	--geometry	X window geometry, see X(7)
++	--help		Display this help
++EOF
++}
++
++speed_is_valid() {
++	echo "$1" | awk '{ if ($1 < 0 || $1 >= 1) { exit 1; }}'
++}
++
++fullscreen_geometry() {
++	if which xrandr >/dev/null 2>&1
++	then
++		xrandr | awk '
++		$1 ~ /[0-9]+x[0-9]+/ && $2 ~ /[0-9.]+\*/ {
++			printf "%s%s\n", $1, "+0+0"
++			exit
++		}'
++	else
++		warn "Cannot determine screen dimensions (xrandr not found)"
++		echo "$default_geometry"
++	fi
++}
++
++geometry_is_valid() {
++	echo "$1" | grep -q '^[0-9]\+x[0-9]\++[0-9]\++[0-9]\+$'
++}
++
++split_geometry() {
++	echo "$1" | sed 's/[x+]/ /g'
++}
++
++geometry=$(fullscreen_geometry)
++speed=$default_speed
++args=$(getopt -n $self -a -l geometry:,speed:,help -o '' -- "$@") ||
++	die "Error processing options"
++eval set -- "$args"
++while :
++do
++	case "$1" in
++		--geometry)
++			geometry="$2"
++			geometry_is_valid "$geometry" ||
++				die "Invalid geometry arg: $geometry"
++			shift 2
++			;;
++		--help)
++			usage
++			exit 0
++			;;
++		--speed)
++			speed="$2"
++			speed_is_valid "$speed" ||
++				die "Invalid speed value: $speed"
++			shift 2
++			;;
++		--)
++			shift
++			break
++			;;
++	esac
++done
++test $# -eq 0 || die "Extra arguments: $*"
++cd "$datadir" && exec "$libdir"/islandGL $(split_geometry "$geometry") "$speed"
+-- 
+2.1.4
+

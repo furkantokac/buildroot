@@ -1,0 +1,3 @@
+source "$BR2_EXTERNAL/package/lib/libpng12/Config.in"
+source "$BR2_EXTERNAL/package/lib/ffmpeg12/Config.in"
+source "$BR2_EXTERNAL/package/lib/libtbb/Config.in"

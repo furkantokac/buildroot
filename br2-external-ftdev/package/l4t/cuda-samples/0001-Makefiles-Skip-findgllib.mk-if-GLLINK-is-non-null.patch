@@ -1,0 +1,398 @@
+From 9883b0fcc559ffb005259e4de746efa4cd06527c Mon Sep 17 00:00:00 2001
+From: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+Date: Wed, 14 Sep 2016 16:56:54 +0200
+Subject: [PATCH 1/2] Makefiles: Skip findgllib.mk if GLLINK is non-null
+
+Don't try to find the gl libs manually if GLLINK is non-null.
+
+Signed-off-by: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+---
+ usr/local/cuda-6.5/samples/2_Graphics/Mandelbrot/Makefile        | 2 ++
+ usr/local/cuda-6.5/samples/2_Graphics/bindlessTexture/Makefile   | 2 ++
+ usr/local/cuda-6.5/samples/2_Graphics/marchingCubes/Makefile     | 2 ++
+ usr/local/cuda-6.5/samples/2_Graphics/simpleGL/Makefile          | 2 ++
+ usr/local/cuda-6.5/samples/2_Graphics/simpleTexture3D/Makefile   | 2 ++
+ usr/local/cuda-6.5/samples/2_Graphics/volumeFiltering/Makefile   | 2 ++
+ usr/local/cuda-6.5/samples/2_Graphics/volumeRender/Makefile      | 2 ++
+ usr/local/cuda-6.5/samples/3_Imaging/SobelFilter/Makefile        | 2 ++
+ usr/local/cuda-6.5/samples/3_Imaging/bicubicTexture/Makefile     | 2 ++
+ usr/local/cuda-6.5/samples/3_Imaging/bilateralFilter/Makefile    | 2 ++
+ usr/local/cuda-6.5/samples/3_Imaging/boxFilter/Makefile          | 2 ++
+ usr/local/cuda-6.5/samples/3_Imaging/cudaDecodeGL/Makefile       | 2 ++
+ usr/local/cuda-6.5/samples/3_Imaging/imageDenoising/Makefile     | 2 ++
+ usr/local/cuda-6.5/samples/3_Imaging/postProcessGL/Makefile      | 2 ++
+ usr/local/cuda-6.5/samples/3_Imaging/recursiveGaussian/Makefile  | 2 ++
+ usr/local/cuda-6.5/samples/3_Imaging/simpleCUDA2GL/Makefile      | 2 ++
+ usr/local/cuda-6.5/samples/5_Simulations/fluidsGL/Makefile       | 2 ++
+ usr/local/cuda-6.5/samples/5_Simulations/nbody/Makefile          | 2 ++
+ usr/local/cuda-6.5/samples/5_Simulations/oceanFFT/Makefile       | 2 ++
+ usr/local/cuda-6.5/samples/5_Simulations/particles/Makefile      | 2 ++
+ usr/local/cuda-6.5/samples/5_Simulations/smokeParticles/Makefile | 2 ++
+ usr/local/cuda-6.5/samples/6_Advanced/FunctionPointers/Makefile  | 2 ++
+ usr/local/cuda-6.5/samples/7_CUDALibraries/grabcutNPP/Makefile   | 2 ++
+ usr/local/cuda-6.5/samples/7_CUDALibraries/randomFog/Makefile    | 2 ++
+ 24 files changed, 48 insertions(+)
+
+diff --git a/usr/local/cuda-6.5/samples/2_Graphics/Mandelbrot/Makefile b/usr/local/cuda-6.5/samples/2_Graphics/Mandelbrot/Makefile
+index 0564fb8..8ac0436 100644
+--- a/usr/local/cuda-6.5/samples/2_Graphics/Mandelbrot/Makefile
++++ b/usr/local/cuda-6.5/samples/2_Graphics/Mandelbrot/Makefile
+@@ -151,8 +151,10 @@ LIBRARIES :=
+ 
+ SAMPLE_ENABLED := 1
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+diff --git a/usr/local/cuda-6.5/samples/2_Graphics/bindlessTexture/Makefile b/usr/local/cuda-6.5/samples/2_Graphics/bindlessTexture/Makefile
+index 164b52e..173275e 100644
+--- a/usr/local/cuda-6.5/samples/2_Graphics/bindlessTexture/Makefile
++++ b/usr/local/cuda-6.5/samples/2_Graphics/bindlessTexture/Makefile
+@@ -151,8 +151,10 @@ LIBRARIES :=
+ 
+ SAMPLE_ENABLED := 1
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+diff --git a/usr/local/cuda-6.5/samples/2_Graphics/marchingCubes/Makefile b/usr/local/cuda-6.5/samples/2_Graphics/marchingCubes/Makefile
+index cd71474..52367cc 100644
+--- a/usr/local/cuda-6.5/samples/2_Graphics/marchingCubes/Makefile
++++ b/usr/local/cuda-6.5/samples/2_Graphics/marchingCubes/Makefile
+@@ -151,8 +151,10 @@ LIBRARIES :=
+ 
+ SAMPLE_ENABLED := 1
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+diff --git a/usr/local/cuda-6.5/samples/2_Graphics/simpleGL/Makefile b/usr/local/cuda-6.5/samples/2_Graphics/simpleGL/Makefile
+index d01d0ec..83abd8e 100644
+--- a/usr/local/cuda-6.5/samples/2_Graphics/simpleGL/Makefile
++++ b/usr/local/cuda-6.5/samples/2_Graphics/simpleGL/Makefile
+@@ -151,8 +151,10 @@ LIBRARIES :=
+ 
+ SAMPLE_ENABLED := 1
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+diff --git a/usr/local/cuda-6.5/samples/2_Graphics/simpleTexture3D/Makefile b/usr/local/cuda-6.5/samples/2_Graphics/simpleTexture3D/Makefile
+index 411bed4..b407c4a 100644
+--- a/usr/local/cuda-6.5/samples/2_Graphics/simpleTexture3D/Makefile
++++ b/usr/local/cuda-6.5/samples/2_Graphics/simpleTexture3D/Makefile
+@@ -151,8 +151,10 @@ LIBRARIES :=
+ 
+ SAMPLE_ENABLED := 1
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+diff --git a/usr/local/cuda-6.5/samples/2_Graphics/volumeFiltering/Makefile b/usr/local/cuda-6.5/samples/2_Graphics/volumeFiltering/Makefile
+index 592a232..4b18712 100644
+--- a/usr/local/cuda-6.5/samples/2_Graphics/volumeFiltering/Makefile
++++ b/usr/local/cuda-6.5/samples/2_Graphics/volumeFiltering/Makefile
+@@ -151,8 +151,10 @@ LIBRARIES :=
+ 
+ SAMPLE_ENABLED := 1
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+diff --git a/usr/local/cuda-6.5/samples/2_Graphics/volumeRender/Makefile b/usr/local/cuda-6.5/samples/2_Graphics/volumeRender/Makefile
+index 2137de8..b0fca22 100644
+--- a/usr/local/cuda-6.5/samples/2_Graphics/volumeRender/Makefile
++++ b/usr/local/cuda-6.5/samples/2_Graphics/volumeRender/Makefile
+@@ -151,8 +151,10 @@ LIBRARIES :=
+ 
+ SAMPLE_ENABLED := 1
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+diff --git a/usr/local/cuda-6.5/samples/3_Imaging/SobelFilter/Makefile b/usr/local/cuda-6.5/samples/3_Imaging/SobelFilter/Makefile
+index 55a5441..8dca6e8 100644
+--- a/usr/local/cuda-6.5/samples/3_Imaging/SobelFilter/Makefile
++++ b/usr/local/cuda-6.5/samples/3_Imaging/SobelFilter/Makefile
+@@ -151,8 +151,10 @@ LIBRARIES :=
+ 
+ SAMPLE_ENABLED := 1
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+diff --git a/usr/local/cuda-6.5/samples/3_Imaging/bicubicTexture/Makefile b/usr/local/cuda-6.5/samples/3_Imaging/bicubicTexture/Makefile
+index cc4d222..a19f99a 100644
+--- a/usr/local/cuda-6.5/samples/3_Imaging/bicubicTexture/Makefile
++++ b/usr/local/cuda-6.5/samples/3_Imaging/bicubicTexture/Makefile
+@@ -151,8 +151,10 @@ LIBRARIES :=
+ 
+ SAMPLE_ENABLED := 1
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+diff --git a/usr/local/cuda-6.5/samples/3_Imaging/bilateralFilter/Makefile b/usr/local/cuda-6.5/samples/3_Imaging/bilateralFilter/Makefile
+index c6d63ba..ec5c1f2 100644
+--- a/usr/local/cuda-6.5/samples/3_Imaging/bilateralFilter/Makefile
++++ b/usr/local/cuda-6.5/samples/3_Imaging/bilateralFilter/Makefile
+@@ -151,8 +151,10 @@ LIBRARIES :=
+ 
+ SAMPLE_ENABLED := 1
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+diff --git a/usr/local/cuda-6.5/samples/3_Imaging/boxFilter/Makefile b/usr/local/cuda-6.5/samples/3_Imaging/boxFilter/Makefile
+index 16d1405..9c431c7 100644
+--- a/usr/local/cuda-6.5/samples/3_Imaging/boxFilter/Makefile
++++ b/usr/local/cuda-6.5/samples/3_Imaging/boxFilter/Makefile
+@@ -151,8 +151,10 @@ LIBRARIES :=
+ 
+ SAMPLE_ENABLED := 1
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+diff --git a/usr/local/cuda-6.5/samples/3_Imaging/cudaDecodeGL/Makefile b/usr/local/cuda-6.5/samples/3_Imaging/cudaDecodeGL/Makefile
+index ccc430a..08513f3 100644
+--- a/usr/local/cuda-6.5/samples/3_Imaging/cudaDecodeGL/Makefile
++++ b/usr/local/cuda-6.5/samples/3_Imaging/cudaDecodeGL/Makefile
+@@ -167,8 +167,10 @@ endif
+ 
+ PTX_FILE := NV12ToARGB_drvapi${OS_SIZE}.ptx
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+diff --git a/usr/local/cuda-6.5/samples/3_Imaging/imageDenoising/Makefile b/usr/local/cuda-6.5/samples/3_Imaging/imageDenoising/Makefile
+index 374f1ba..a566fe4 100644
+--- a/usr/local/cuda-6.5/samples/3_Imaging/imageDenoising/Makefile
++++ b/usr/local/cuda-6.5/samples/3_Imaging/imageDenoising/Makefile
+@@ -151,8 +151,10 @@ LIBRARIES :=
+ 
+ SAMPLE_ENABLED := 1
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+diff --git a/usr/local/cuda-6.5/samples/3_Imaging/postProcessGL/Makefile b/usr/local/cuda-6.5/samples/3_Imaging/postProcessGL/Makefile
+index db667b0..18e9267 100644
+--- a/usr/local/cuda-6.5/samples/3_Imaging/postProcessGL/Makefile
++++ b/usr/local/cuda-6.5/samples/3_Imaging/postProcessGL/Makefile
+@@ -151,8 +151,10 @@ LIBRARIES :=
+ 
+ SAMPLE_ENABLED := 1
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+diff --git a/usr/local/cuda-6.5/samples/3_Imaging/recursiveGaussian/Makefile b/usr/local/cuda-6.5/samples/3_Imaging/recursiveGaussian/Makefile
+index c55b510..af3474b 100644
+--- a/usr/local/cuda-6.5/samples/3_Imaging/recursiveGaussian/Makefile
++++ b/usr/local/cuda-6.5/samples/3_Imaging/recursiveGaussian/Makefile
+@@ -151,8 +151,10 @@ LIBRARIES :=
+ 
+ SAMPLE_ENABLED := 1
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+diff --git a/usr/local/cuda-6.5/samples/3_Imaging/simpleCUDA2GL/Makefile b/usr/local/cuda-6.5/samples/3_Imaging/simpleCUDA2GL/Makefile
+index b58febd..8296a54 100644
+--- a/usr/local/cuda-6.5/samples/3_Imaging/simpleCUDA2GL/Makefile
++++ b/usr/local/cuda-6.5/samples/3_Imaging/simpleCUDA2GL/Makefile
+@@ -151,8 +151,10 @@ LIBRARIES :=
+ 
+ SAMPLE_ENABLED := 1
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+diff --git a/usr/local/cuda-6.5/samples/5_Simulations/fluidsGL/Makefile b/usr/local/cuda-6.5/samples/5_Simulations/fluidsGL/Makefile
+index a2552a2..eabb08e 100644
+--- a/usr/local/cuda-6.5/samples/5_Simulations/fluidsGL/Makefile
++++ b/usr/local/cuda-6.5/samples/5_Simulations/fluidsGL/Makefile
+@@ -151,8 +151,10 @@ LIBRARIES :=
+ 
+ SAMPLE_ENABLED := 1
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+diff --git a/usr/local/cuda-6.5/samples/5_Simulations/nbody/Makefile b/usr/local/cuda-6.5/samples/5_Simulations/nbody/Makefile
+index 0eebb18..61f18ab 100644
+--- a/usr/local/cuda-6.5/samples/5_Simulations/nbody/Makefile
++++ b/usr/local/cuda-6.5/samples/5_Simulations/nbody/Makefile
+@@ -151,8 +151,10 @@ LIBRARIES :=
+ 
+ SAMPLE_ENABLED := 1
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+diff --git a/usr/local/cuda-6.5/samples/5_Simulations/oceanFFT/Makefile b/usr/local/cuda-6.5/samples/5_Simulations/oceanFFT/Makefile
+index c6710dc..d671c45 100644
+--- a/usr/local/cuda-6.5/samples/5_Simulations/oceanFFT/Makefile
++++ b/usr/local/cuda-6.5/samples/5_Simulations/oceanFFT/Makefile
+@@ -151,8 +151,10 @@ LIBRARIES :=
+ 
+ SAMPLE_ENABLED := 1
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+diff --git a/usr/local/cuda-6.5/samples/5_Simulations/particles/Makefile b/usr/local/cuda-6.5/samples/5_Simulations/particles/Makefile
+index d98cec6..383ed5e 100644
+--- a/usr/local/cuda-6.5/samples/5_Simulations/particles/Makefile
++++ b/usr/local/cuda-6.5/samples/5_Simulations/particles/Makefile
+@@ -151,8 +151,10 @@ LIBRARIES :=
+ 
+ SAMPLE_ENABLED := 1
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+diff --git a/usr/local/cuda-6.5/samples/5_Simulations/smokeParticles/Makefile b/usr/local/cuda-6.5/samples/5_Simulations/smokeParticles/Makefile
+index 04e5714..ee527f2 100644
+--- a/usr/local/cuda-6.5/samples/5_Simulations/smokeParticles/Makefile
++++ b/usr/local/cuda-6.5/samples/5_Simulations/smokeParticles/Makefile
+@@ -151,8 +151,10 @@ LIBRARIES :=
+ 
+ SAMPLE_ENABLED := 1
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+diff --git a/usr/local/cuda-6.5/samples/6_Advanced/FunctionPointers/Makefile b/usr/local/cuda-6.5/samples/6_Advanced/FunctionPointers/Makefile
+index efb3e2f..bf816cf 100644
+--- a/usr/local/cuda-6.5/samples/6_Advanced/FunctionPointers/Makefile
++++ b/usr/local/cuda-6.5/samples/6_Advanced/FunctionPointers/Makefile
+@@ -151,8 +151,10 @@ LIBRARIES :=
+ 
+ SAMPLE_ENABLED := 1
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+diff --git a/usr/local/cuda-6.5/samples/7_CUDALibraries/grabcutNPP/Makefile b/usr/local/cuda-6.5/samples/7_CUDALibraries/grabcutNPP/Makefile
+index 6120115..335073a 100644
+--- a/usr/local/cuda-6.5/samples/7_CUDALibraries/grabcutNPP/Makefile
++++ b/usr/local/cuda-6.5/samples/7_CUDALibraries/grabcutNPP/Makefile
+@@ -151,8 +151,10 @@ LIBRARIES :=
+ 
+ SAMPLE_ENABLED := 1
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+diff --git a/usr/local/cuda-6.5/samples/7_CUDALibraries/randomFog/Makefile b/usr/local/cuda-6.5/samples/7_CUDALibraries/randomFog/Makefile
+index ab7228b..9b74b1d 100644
+--- a/usr/local/cuda-6.5/samples/7_CUDALibraries/randomFog/Makefile
++++ b/usr/local/cuda-6.5/samples/7_CUDALibraries/randomFog/Makefile
+@@ -151,8 +151,10 @@ LIBRARIES :=
+ 
+ SAMPLE_ENABLED := 1
+ 
++ifeq ($(GLLINK),)
+ # Makefile include to help find GL Libraries
+ include ./findgllib.mk
++endif
+ 
+ # OpenGL specific libraries
+ ifneq ($(DARWIN),)
+-- 
+2.1.4
+

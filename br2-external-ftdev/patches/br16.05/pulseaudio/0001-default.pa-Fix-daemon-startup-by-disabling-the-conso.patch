@@ -1,0 +1,37 @@
+From 2cfc7cf0d152c9d65e1318299d00c63e38604a49 Mon Sep 17 00:00:00 2001
+From: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+Date: Wed, 3 May 2017 19:37:53 +0200
+Subject: [PATCH] default.pa: Fix daemon startup by disabling the console-kit
+ module
+
+We don't have consolekit in buildroot, and pulseaudio daemon startup
+just fails hard if the consolekit module doesn't find consolekit.
+Disable the module.
+
+Signed-off-by: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+---
+ src/daemon/default.pa.in | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/src/daemon/default.pa.in b/src/daemon/default.pa.in
+index 783e326..d995eb8 100755
+--- a/src/daemon/default.pa.in
++++ b/src/daemon/default.pa.in
+@@ -153,9 +153,11 @@ load-module module-suspend-on-idle
+ 
+ ### If autoexit on idle is enabled we want to make sure we only quit
+ ### when no local session needs us anymore.
+-.ifexists module-console-kit@PA_SOEXT@
+-load-module module-console-kit
+-.endif
++# Disable the console-kit module since it requires consolekit and lets
++# daemon startup fail without it.
++#.ifexists module-console-kit@PA_SOEXT@
++#load-module module-console-kit
++#.endif
+ .ifexists module-systemd-login@PA_SOEXT@
+ load-module module-systemd-login
+ .endif
+-- 
+2.11.0
+

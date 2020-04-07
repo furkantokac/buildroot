@@ -1,0 +1,39 @@
+#!/bin/sh
+#
+# Use a symlink to select between xorg-l4t.conf and xorg-mainline.conf
+#
+
+fb_driver="$(basename $(readlink /sys/class/graphics/fb0/device/driver) 2> /dev/null)"
+xorg_conf=/etc/X11/xorg.conf
+xorg_l4t_conf=/etc/X11/xorg-l4t.conf
+xorg_mainline_conf=/etc/X11/xorg-mainline.conf
+
+set_xorg_conf() {
+	case "$fb_driver" in
+		tegradc)
+			target="$xorg_l4t_conf"
+			;;
+		*)
+			target="$xorg_mainline_conf"
+	esac
+	# Remove the old xorg.conf symlink
+	rm -f "$xorg_conf"
+	# Add the new one if the target exists
+	if [ -f "$target" ] ; then
+		ln -s "$target" "$xorg_conf"
+	fi
+}
+
+case "$1" in
+	start|restart)
+		# Only run if xorg.conf doesn't exists or is a symlink
+		[ ! -e "$xorg_conf" -o -L "$xorg_conf" ] || exit 0
+
+		echo -n "Selecting xorg.conf "
+		set_xorg_conf && echo "done." || { echo "FAILED." ; exit 1 ; }
+		;;
+	*)
+		echo "usage: $0 {start|restart}"
+		exit 1
+		;;
+esac

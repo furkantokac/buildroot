@@ -1,0 +1,14 @@
+config BR2_HOST_CUDA_CROSS_TOOLCHAIN
+	bool "cuda cross-compiling host toolchain"
+	# CUDA cross toolchain is available for x86_64 only
+	depends on BR2_HOSTARCH = "x86_64"
+	# nvcc doesn't like gcc >= 4.9
+	depends on BR2_GCC_VERSION_4_5_X || BR2_GCC_VERSION_4_7_X || BR2_GCC_VERSION_4_8_X
+
+	help
+		Cross-compiling CUDA host toolchain with nvcc and
+		companion tools, and header files
+
+comment "CUDA toolchain requires host arch x86_64 and gcc <= 4.8"
+	depends on BR2_PACKAGE_CUDA && (BR2_HOSTARCH != "x86_64" || !BR2_GCC_VERSION_4_5_X && !BR2_GCC_VERSION_4_7_X && !BR2_GCC_VERSION_4_8_X)
+

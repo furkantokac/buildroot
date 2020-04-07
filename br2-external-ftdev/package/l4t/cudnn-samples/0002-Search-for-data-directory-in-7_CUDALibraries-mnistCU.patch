@@ -1,0 +1,59 @@
+From c4eaa41b9d033aabd4bff63e6ea23933a43641f0 Mon Sep 17 00:00:00 2001
+From: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+Date: Thu, 3 Nov 2016 11:00:56 +0100
+Subject: [PATCH 2/2] Search for data/ directory in 7_CUDALibraries/mnistCUDNN
+
+Look for the data/ directory not only in the current working directory,
+but also in 7_CUDALibraries/mnistCUDNN in ../, ../../ and ../../../.
+
+This search path is similar to what the function sdkFindFilePath does
+for the CUDA samples package.
+
+This allows installation of the cuDNN demo into the usual paths for CUDA
+samples.
+
+Signed-off-by: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+---
+ mnistCUDNN.cpp | 19 ++++++++++++++++++-
+ 1 file changed, 18 insertions(+), 1 deletion(-)
+
+diff --git a/mnistCUDNN.cpp b/mnistCUDNN.cpp
+index 909f2ba..52b04fa 100644
+--- a/mnistCUDNN.cpp
++++ b/mnistCUDNN.cpp
+@@ -22,6 +22,7 @@
+ #include <sstream>
+ #include <fstream>
+ #include <stdlib.h>
++#include <unistd.h>
+ 
+ #include <cublas_v2.h>
+ #include <cudnn.h>
+@@ -79,7 +80,23 @@ const char *ip2_bias_bin = "ip2.bias.bin";
+ 
+ void get_path(std::string& sFilename, const char *fname, const char *pname)
+ {
+-    sFilename = (std::string("data/") + std::string(fname));
++    const std::string fname_s = fname;
++    const char *dirs[] = {
++	    "data/",
++	    "../7_CUDALibraries/mnistCUDNN/data/",
++	    "../../7_CUDALibraries/mnistCUDNN/data/",
++	    "../../../7_CUDALibraries/mnistCUDNN/data/",
++	    NULL
++    };
++
++    for (const char **d = dirs; ++d; *d)
++    {
++        sFilename = (std::string(*d) + fname_s);
++        if (access(sFilename.c_str(), F_OK) == 0)
++            return;
++    }
++
++    FatalError(std::string("Cannot find file ") + fname_s);
+ }
+ 
+ struct Layer_t
+-- 
+2.1.4
+

@@ -1,0 +1,24 @@
+if BR2_ARM_CPU_ARMV7A
+menu "Linux4Tegra modules"
+source "$BR2_EXTERNAL/package/l4t/nvidia-drivers/Config.in"
+source "$BR2_EXTERNAL/package/l4t/nvidia-gst/Config.in"
+source "$BR2_EXTERNAL/package/l4t/cuda/Config.in"
+source "$BR2_EXTERNAL/package/l4t/cuda-cross-toolchain/Config.in.host"
+source "$BR2_EXTERNAL/package/l4t/cuda-samples/Config.in"
+source "$BR2_EXTERNAL/package/l4t/cudnn/Config.in"
+source "$BR2_EXTERNAL/package/l4t/cudnn-samples/Config.in"
+source "$BR2_EXTERNAL/package/l4t/nvidia-islandgl/Config.in"
+source "$BR2_EXTERNAL/package/l4t/opencv4tegra/Config.in"
+source "$BR2_EXTERNAL/package/l4t/nvidia-tegrastats/Config.in"
+source "$BR2_EXTERNAL/package/l4t/visionworks/Config.in"
+source "$BR2_EXTERNAL/package/l4t/libnvxio/Config.in"
+source "$BR2_EXTERNAL/package/l4t/visionworks-samples/Config.in"
+source "$BR2_EXTERNAL/package/l4t/visionworks-sfm/Config.in"
+source "$BR2_EXTERNAL/package/l4t/visionworks-sfm-samples/Config.in"
+source "$BR2_EXTERNAL/package/l4t/visionworks-tracking/Config.in"
+source "$BR2_EXTERNAL/package/l4t/visionworks-tracking-samples/Config.in"
+endmenu
+endif
+
+comment "Linux4Tegra modules are only available for ARMv7"
+	depends on !BR2_ARM_CPU_ARMV7A

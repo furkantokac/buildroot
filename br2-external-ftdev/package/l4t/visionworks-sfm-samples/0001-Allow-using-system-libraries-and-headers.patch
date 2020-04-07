@@ -1,0 +1,50 @@
+From eecf497f0596a2f0f355db8b826559ba20b96dd3 Mon Sep 17 00:00:00 2001
+From: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+Date: Thu, 20 Oct 2016 19:24:55 +0200
+Subject: [PATCH] Allow using system libraries and headers
+
+The libeigen header files, the opengl header file and libglfw3 are not
+distributed with the visionworks-sfm-samples, but they're referenced by
+the build. (The missing files are contained in the visionworks-samples
+package, where they're used for the build as well.)
+
+In the makefile, put the corresponding cflags and ldlfags into separate
+variables, so that they can be overridden when make is invoked.
+
+Signed-off-by: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+---
+ usr/share/visionworks-sfm/sources/samples/sfm/Makefile | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/usr/share/visionworks-sfm/sources/samples/sfm/Makefile b/usr/share/visionworks-sfm/sources/samples/sfm/Makefile
+index a6cf210..58f334f 100644
+--- a/usr/share/visionworks-sfm/sources/samples/sfm/Makefile
++++ b/usr/share/visionworks-sfm/sources/samples/sfm/Makefile
+@@ -83,9 +83,14 @@ EIGEN_CFLAGS := -I../../3rdparty/eigen
+ NVXIO_CFLAGS := -I../../nvxio/include -DUSE_GSTREAMER=1 -DUSE_GSTREAMER_OMX=1
+ NVXIO_LIBS := ../../libs/$(OS_ARCH)/$(OSLOWER)/$(TARGET)$(if $(abi),/$(abi))/libnvxio.a
+ 
++OPENGL_CFLAGS := -I../../3rdparty/opengl
++
++GLFW3_CFLAGS := -I../../3rdparty/glfw3/include
++GLFW3_LIBS := ../../3rdparty/glfw3/libs/libglfw3.a
++
+ INCLUDES :=
+ INCLUDES += $(NVXIO_CFLAGS)
+-INCLUDES +=  -I../../3rdparty/opengl -I../../3rdparty/glfw3/include  $(shell pkg-config --cflags freetype2)
++INCLUDES += $(OPENGL_CFLAGS) $(GLFW3_CFLAGS) $(shell pkg-config --cflags freetype2)
+ INCLUDES += $(EIGEN_CFLAGS)
+ INCLUDES += $(EXTERNAL_CFLAGS)
+ 
+@@ -104,7 +109,7 @@ ifneq ($(PKG_CONFIG_SYSROOT_DIR),)
+ endif
+ 
+ LIBRARIES += $(NVXIO_LIBS)
+-LIBRARIES += $(shell pkg-config --libs freetype2) ../../3rdparty/glfw3/libs/libglfw3.a $(shell pkg-config --libs gl) $(shell pkg-config --libs xrandr xi xxf86vm x11)
++LIBRARIES += $(shell pkg-config --libs freetype2) $(GLFW3_LIBS) $(shell pkg-config --libs gl) $(shell pkg-config --libs xrandr xi xxf86vm x11)
+ LIBRARIES +=  $(shell pkg-config --libs gstreamer-base-1.0 gstreamer-pbutils-1.0 gstreamer-app-1.0)
+ LIBRARIES +=   -lvisionworks_sfm
+ LIBRARIES += $(EXTERNAL_LIBS)
+-- 
+2.1.4
+

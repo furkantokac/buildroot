@@ -1,0 +1,1 @@
+uuid_disk=\$\{disk_uuid\};name=rootfs,size=-,uuid=\$\{rootfs_uuid\}

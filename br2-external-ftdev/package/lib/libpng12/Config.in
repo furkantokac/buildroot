@@ -1,0 +1,12 @@
+config BR2_PACKAGE_LIBPNG12
+	bool "libpng12"
+	select BR2_PACKAGE_ZLIB
+	help
+	  Some programs still link using the legacy -lpng12 version
+	  of libpng for handling PNG (Portable Network Graphics)
+	  images. It is still maintained for security fixes so
+	  make it available, but do not select this unless you
+	  have an application that explicitly needs the older
+	  libpng12 functionality. Use libpng instead.
+
+	  http://www.libpng.org/

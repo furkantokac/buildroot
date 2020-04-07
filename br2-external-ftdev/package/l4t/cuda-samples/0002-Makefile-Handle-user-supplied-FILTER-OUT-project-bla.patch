@@ -1,0 +1,48 @@
+From a94b6203e4ccc7e83ccbccf704409992b68a6608 Mon Sep 17 00:00:00 2001
+From: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+Date: Thu, 15 Sep 2016 12:10:43 +0200
+Subject: [PATCH 2/2] Makefile: Handle user-supplied FILTER-OUT project
+ blacklist
+
+Rather than using FILTER-OUT as an internal-only project blacklist,
+preserve and extend it if the user has set it to include some projects.
+
+Signed-off-by: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+---
+ usr/local/cuda-6.5/samples/Makefile | 18 +++++++++---------
+ 1 file changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/usr/local/cuda-6.5/samples/Makefile b/usr/local/cuda-6.5/samples/Makefile
+index cd04400..a17be4e 100644
+--- a/usr/local/cuda-6.5/samples/Makefile
++++ b/usr/local/cuda-6.5/samples/Makefile
+@@ -44,17 +44,17 @@ endif
+ # Project folders that contain CUDA samples
+ PROJECTS ?= $(shell find 0_Simple 1_Utilities 2_Graphics 3_Imaging 4_Finance 5_Simulations 6_Advanced 7_CUDALibraries -name Makefile)
+ 
+-FILTER-OUT :=
++FILTER-OUT ?=
+ 
+ ifeq ($(OS_ARCH),armv7l)
+-FILTER-OUT += 3_Imaging/cudaDecodeGL/Makefile
+-FILTER-OUT += 7_CUDALibraries/imageSegmentationNPP/Makefile
+-FILTER-OUT += 7_CUDALibraries/boxFilterNPP/Makefile
+-FILTER-OUT += 7_CUDALibraries/grabcutNPP/Makefile
+-FILTER-OUT += 7_CUDALibraries/freeImageInteropNPP/Makefile
+-FILTER-OUT += 7_CUDALibraries/freeImageInteropNPP/out
+-FILTER-OUT += 7_CUDALibraries/histEqualizationNPP/Makefile
+-FILTER-OUT += 7_CUDALibraries/jpegNPP/Makefile
++override FILTER-OUT += 3_Imaging/cudaDecodeGL/Makefile
++override FILTER-OUT += 7_CUDALibraries/imageSegmentationNPP/Makefile
++override FILTER-OUT += 7_CUDALibraries/boxFilterNPP/Makefile
++override FILTER-OUT += 7_CUDALibraries/grabcutNPP/Makefile
++override FILTER-OUT += 7_CUDALibraries/freeImageInteropNPP/Makefile
++override FILTER-OUT += 7_CUDALibraries/freeImageInteropNPP/out
++override FILTER-OUT += 7_CUDALibraries/histEqualizationNPP/Makefile
++override FILTER-OUT += 7_CUDALibraries/jpegNPP/Makefile
+ endif
+ 
+ PROJECTS := $(filter-out $(FILTER-OUT),$(PROJECTS))
+-- 
+2.1.4
+

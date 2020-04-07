@@ -1,0 +1,32 @@
+From 9c4bc3f073404eec33b03a305270549f82de027b Mon Sep 17 00:00:00 2001
+From: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+Date: Thu, 27 Apr 2017 16:30:06 +0200
+Subject: [PATCH] user-exec.c: Fix access of uc_mcontext.arm_pc for uclibc
+
+Since v1.0.10 (and before v1.0.6), uclibc-ng exposes
+__GLIBC__.__GLIBC_MINOR__ == 2.2, while it implements many newer
+interfaces.  One such interface is the user context struct ucontext,
+which is used by qemu.  Fix the check in qemu to use the proper struct
+members if compiled with uclibc.
+
+Signed-off-by: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+---
+ user-exec.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/user-exec.c b/user-exec.c
+index 8ad89a4..a3e74ac 100644
+--- a/user-exec.c
++++ b/user-exec.c
+@@ -464,7 +464,7 @@ int cpu_signal_handler(int host_signum, void *pinfo,
+ 
+ #if defined(__NetBSD__)
+     pc = uc->uc_mcontext.__gregs[_REG_R15];
+-#elif defined(__GLIBC__) && (__GLIBC__ < 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ <= 3))
++#elif defined(__GLIBC__) && (__GLIBC__ < 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ <= 3)) && !defined(__UCLIBC__)
+     pc = uc->uc_mcontext.gregs[R15];
+ #else
+     pc = uc->uc_mcontext.arm_pc;
+-- 
+2.11.0
+

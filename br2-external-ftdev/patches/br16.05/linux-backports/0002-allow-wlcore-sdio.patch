@@ -1,0 +1,13 @@
+diff --git a/drivers/net/wireless/ti/wlcore/Kconfig b/drivers/net/wireless/ti/wlcore/Kconfig
+index 09bb747..37dbb1c 100644
+--- a/drivers/net/wireless/ti/wlcore/Kconfig
++++ b/drivers/net/wireless/ti/wlcore/Kconfig
+@@ -26,7 +26,6 @@ config WLCORE_SPI
+ 	  Say N if unsure.
+ 
+ config WLCORE_SDIO
+-	depends on !KERNEL_3_15
+ 	tristate "TI wlcore SDIO support"
+ 	depends on m
+ 	depends on WLCORE && MMC
+

@@ -1,0 +1,165 @@
+menuconfig BR2_PACKAGE_FFMPEG12
+	bool "ffmpeg12"
+	help
+	  FFmpeg is a complete, cross-platform solution to record, convert
+	  and stream audio and video.
+
+	  http://www.ffmpeg.org
+
+if BR2_PACKAGE_FFMPEG12
+
+config BR2_PACKAGE_FFMPEG12_GPL
+	bool "Enable GPL code"
+	help
+	  allow use of GPL code, the resulting libs and binaries will
+	  be under GPL
+
+config BR2_PACKAGE_FFMPEG12_NONFREE
+	bool "Enable nonfree code"
+	help
+	  allow use of nonfree code, the resulting libs and binaries
+	  will be unredistributable
+
+config BR2_PACKAGE_FFMPEG12_FFMPEG
+	bool "Build ffmpeg (the command line application)"
+	select BR2_PACKAGE_FFMPEG12_SWSCALE
+	depends on !BR2_PACKAGE_FFMPEG_FFMPEG
+	default y
+	help
+	  FFmpeg is a very fast video and audio converter.
+	  It can also grab from a live audio/video source.
+
+	  It is not needed if you want to link the FFmpeg libraries
+	  to your application.
+
+comment "ffmpeg12 application ffmpeg conflicts with ffmpeg application ffmpeg"
+	depends on BR2_PACKAGE_FFMPEG_FFMPEG
+
+config BR2_PACKAGE_FFMPEG12_FFPLAY
+	bool "Build ffplay"
+	select BR2_PACKAGE_SDL
+	depends on !BR2_PACKAGE_FFMPEG_FFPLAY
+	help
+	  FFplay is a very simple and portable media player using the
+	  FFmpeg libraries and the SDL library.
+	  It is mostly used as a testbed for the various FFmpeg APIs.
+
+comment "ffmpeg12 application ffplay conflicts with ffmpeg application ffplay"
+	depends on BR2_PACKAGE_FFMPEG_FFPLAY
+
+config BR2_PACKAGE_FFMPEG12_FFSERVER
+	bool "Build ffserver"
+	depends on !BR2_PACKAGE_FFMPEG_FFSERVER
+	help
+	  FFserver is a streaming server for both audio and video.
+
+comment "ffmeg12 application ffserver conflicts with ffmpeg application ffserver"
+	depends on BR2_PACKAGE_FFMPEG_FFSERVER
+
+config BR2_PACKAGE_FFMPEG12_POSTPROC
+	bool "Build libpostproc"
+	depends on BR2_PACKAGE_FFMPEG12_GPL
+	help
+	  Postproc is a library of video postprocessing routines.
+
+config BR2_PACKAGE_FFMPEG12_SWSCALE
+	bool "Build libswscale"
+	help
+	  Swscale is a library of video scaling routines.
+
+config BR2_PACKAGE_FFMPEG12_ENCODERS
+	string "Enabled encoders"
+	default "all"
+	help
+	  Space-separated list of encoders to build in FFmpeg,
+	  or "all" to build all of them.
+
+	  Run ./configure --list-encoders in the ffmpeg sources
+	  directory to know the available options.
+
+config BR2_PACKAGE_FFMPEG12_DECODERS
+	string "Enabled decoders"
+	default "all"
+	help
+	  Space-separated list of decoders to build in FFmpeg,
+	  or "all" to build all of them.
+
+	  Run ./configure --list-decoders in the ffmpeg sources
+	  directory to know the available options.
+
+config BR2_PACKAGE_FFMPEG12_MUXERS
+	string "Enabled muxers"
+	default "all"
+	help
+	  Space-separated list of muxers to build in FFmpeg,
+	  or "all" to build all of them.
+
+	  Run ./configure --list-muxers in the ffmpeg sources
+	  directory to know the available options.
+
+config BR2_PACKAGE_FFMPEG12_DEMUXERS
+	string "Enabled demuxers"
+	default "all"
+	help
+	  Space-separated list of demuxers to build in FFmpeg,
+	  or "all" to build all of them.
+
+	  Run ./configure --list-demuxers in the ffmpeg sources
+	  directory to know the available options.
+
+config BR2_PACKAGE_FFMPEG12_PARSERS
+	string "Enabled parsers"
+	default "all"
+	help
+	  Space-separated list of parsers to build in FFmpeg,
+	  or "all" to build all of them.
+
+	  Run ./configure --list-parsers in the ffmpeg sources
+	  directory to know the available options.
+
+config BR2_PACKAGE_FFMPEG12_BSFS
+	string "Enabled bitstreams"
+	default "all"
+	help
+	  Space-separated list of bitstream filters to build in FFmpeg,
+	  or "all" to build all of them.
+
+	  Run ./configure --list-bsfs in the ffmpeg sources
+	  directory to know the available options.
+
+config BR2_PACKAGE_FFMPEG12_PROTOCOLS
+	string "Enabled protocols"
+	default "all"
+	help
+	  Space-separated list of protocols to build in FFmpeg,
+	  or "all" to build all of them.
+
+	  Run ./configure --list-protocols in the ffmpeg sources
+	  directory to know the available options.
+
+config BR2_PACKAGE_FFMPEG12_FILTERS
+	string "Enabled filters"
+	default "all"
+	help
+	  Space-separated list of filters to build in FFmpeg,
+	  or "all" to build all of them.
+
+	  Run ./configure --list-filters in the ffmpeg sources
+	  directory to know the available options.
+
+config BR2_PACKAGE_FFMPEG12_INDEVS
+	bool "Enable input devices"
+	default y
+
+config BR2_PACKAGE_FFMPEG12_OUTDEVS
+	bool "Enable output devices"
+	default y
+
+config BR2_PACKAGE_FFMPEG12_EXTRACONF
+	string "Additional parameters for ./configure"
+	default ""
+	help
+	  Extra parameters that will be appended to FFmpeg's
+	  ./configure commandline.
+
+endif

@@ -1,0 +1,76 @@
+From 101e0c29c973616d95fe9e5d666fbb1ce708fe18 Mon Sep 17 00:00:00 2001
+From: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+Date: Tue, 9 Feb 2016 19:37:11 +0100
+Subject: [PATCH] arm: properly handle a missing /chosen node in the DT
+
+When adding a new node to the DT in the setup_dtb_prop function, the
+parent offset need be passed to fdt_add_subnode.  Currently a bogus
+error code is used.  Fix that by adding the parent offset as an extra
+function argument to setup_dtb_prop, and change the handling of the
+/chosen node to operate on a relative path plus (zero) offset instead of
+an absolute path.
+
+Signed-off-by: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+---
+ kexec/arch/arm/kexec-zImage-arm.c | 15 ++++++++-------
+ 1 file changed, 8 insertions(+), 7 deletions(-)
+
+diff --git a/kexec/arch/arm/kexec-zImage-arm.c b/kexec/arch/arm/kexec-zImage-arm.c
+index ff4e38d..39130bf 100644
+--- a/kexec/arch/arm/kexec-zImage-arm.c
++++ b/kexec/arch/arm/kexec-zImage-arm.c
+@@ -219,8 +219,9 @@ int atag_arm_load(struct kexec_info *info, unsigned long base,
+ 	return 0;
+ }
+ 
+-static int setup_dtb_prop(char **bufp, off_t *sizep, const char *node_name,
+-		const char *prop_name, const void *val, int len)
++static int setup_dtb_prop(char **bufp, off_t *sizep, int parentoffset,
++		const char *node_name, const char *prop_name,
++		const void *val, int len)
+ {
+ 	char *dtb_buf;
+ 	off_t dtb_size;
+@@ -235,14 +236,14 @@ static int setup_dtb_prop(char **bufp, off_t *sizep, const char *node_name,
+ 	dtb_size = *sizep;
+ 
+ 	/* check if the subnode has already exist */
+-	off = fdt_path_offset(dtb_buf, node_name);
++	off = fdt_subnode_offset(dtb_buf, parentoffset, node_name);
+ 	if (off == -FDT_ERR_NOTFOUND) {
+ 		dtb_size += fdt_node_len(node_name);
+ 		fdt_set_totalsize(dtb_buf, dtb_size);
+ 		dtb_buf = xrealloc(dtb_buf, dtb_size);
+ 		if (dtb_buf == NULL)
+ 			die("xrealloc failed\n");
+-		off = fdt_add_subnode(dtb_buf, off, node_name);
++		off = fdt_add_subnode(dtb_buf, parentoffset, node_name);
+ 	}
+ 
+ 	if (off < 0) {
+@@ -450,7 +451,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
+ 				 *  Error should have been reported so
+ 				 *  directly return -1
+ 				 */
+-				if (setup_dtb_prop(&dtb_buf, &dtb_length, "/chosen",
++				if (setup_dtb_prop(&dtb_buf, &dtb_length, 0, "chosen",
+ 						"bootargs", command_line,
+ 						strlen(command_line) + 1))
+ 					return -1;
+@@ -496,11 +497,11 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
+ 			start = cpu_to_be32((unsigned long)(initrd_base));
+ 			end = cpu_to_be32((unsigned long)(initrd_base + initrd_size));
+ 
+-			if (setup_dtb_prop(&dtb_buf, &dtb_length, "/chosen",
++			if (setup_dtb_prop(&dtb_buf, &dtb_length, 0, "chosen",
+ 					"linux,initrd-start", &start,
+ 					sizeof(start)))
+ 				return -1;
+-			if (setup_dtb_prop(&dtb_buf, &dtb_length, "/chosen",
++			if (setup_dtb_prop(&dtb_buf, &dtb_length, 0, "chosen",
+ 					"linux,initrd-end", &end,
+ 					sizeof(end)))
+ 				return -1;
+-- 
+2.1.4
+

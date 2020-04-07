@@ -1,0 +1,64 @@
+From 9e91d908f38572bb9fb08c0b1114b1a2969c6734 Mon Sep 17 00:00:00 2001
+From: Julian Scheel <julian@jusst.de>
+Date: Tue, 23 Aug 2016 14:50:22 +0200
+Subject: [PATCH 1/2] m4: Remove explicit /usr/include reference
+
+Do not explicitly add a reference to include /usr/include. It is the default
+include path anyway and when cross-compiling using an absolute path causes
+breakage.
+This patch also updates configure, so that autoreconf is not required to apply
+this fix.
+
+Signed-off-by: Julian Scheel <julian@jusst.de>
+---
+ configure               | 4 ++--
+ m4/evas_check_engine.m4 | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/configure b/configure
+index e1a98bc..0a7f1bb 100755
+--- a/configure
++++ b/configure
+@@ -26744,7 +26744,7 @@ fi
+          x_cflags=${x_cflags:--I${x_includes:-$x_dir/include}}
+          x_libs="${x_libs:--L${x_libraries:-$x_dir/lib}} -lX11 -lXext -lXrender"
+       fi
+-   evas_engine_gl_xcb_cflags="-I/usr/include ${XCB_GL_CFLAGS} ${x_cflags}"
++   evas_engine_gl_xcb_cflags="${XCB_GL_CFLAGS} ${x_cflags}"
+    evas_engine_gl_xcb_libs="${XCB_GL_LIBS} ${x_libs} -lGL $gl_pt_lib"
+    evas_engine_gl_common_libs="-lGL $gl_pt_lib"
+    fi
+@@ -27983,7 +27983,7 @@ fi
+          x_cflags=${x_cflags:--I${x_includes:-$x_dir/include}}
+          x_libs="${x_libs:--L${x_libraries:-$x_dir/lib}} -lX11 -lXext -lXrender"
+       fi
+-   evas_engine_gl_xlib_cflags="-I/usr/include ${x_cflags}"
++   evas_engine_gl_xlib_cflags="${x_cflags}"
+    evas_engine_gl_xlib_libs="${x_libs} -lGL $gl_pt_lib"
+    evas_engine_gl_common_libs="-lGL $gl_pt_lib"
+    fi
+diff --git a/m4/evas_check_engine.m4 b/m4/evas_check_engine.m4
+index d4db2aa..9bbff93 100644
+--- a/m4/evas_check_engine.m4
++++ b/m4/evas_check_engine.m4
+@@ -140,7 +140,7 @@ if test "x${have_dep}" = "xyes" ; then
+          x_cflags=${x_cflags:--I${x_includes:-$x_dir/include}}
+          x_libs="${x_libs:--L${x_libraries:-$x_dir/lib}} -lX11 -lXext -lXrender"
+       fi
+-   evas_engine_[]$1[]_cflags="-I/usr/include ${x_cflags}"
++   evas_engine_[]$1[]_cflags="${x_cflags}"
+    evas_engine_[]$1[]_libs="${x_libs} -lGL $gl_pt_lib"
+    evas_engine_gl_common_libs="-lGL $gl_pt_lib"
+    fi
+@@ -314,7 +314,7 @@ if test "x${have_dep}" = "xyes" ; then
+          x_cflags=${x_cflags:--I${x_includes:-$x_dir/include}}
+          x_libs="${x_libs:--L${x_libraries:-$x_dir/lib}} -lX11 -lXext -lXrender"
+       fi
+-   evas_engine_[]$1[]_cflags="-I/usr/include ${XCB_GL_CFLAGS} ${x_cflags}"
++   evas_engine_[]$1[]_cflags="${XCB_GL_CFLAGS} ${x_cflags}"
+    evas_engine_[]$1[]_libs="${XCB_GL_LIBS} ${x_libs} -lGL $gl_pt_lib"
+    evas_engine_gl_common_libs="-lGL $gl_pt_lib"
+    fi
+-- 
+2.9.3
+

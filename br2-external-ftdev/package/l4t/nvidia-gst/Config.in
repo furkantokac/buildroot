@@ -1,0 +1,14 @@
+config BR2_PACKAGE_NVIDIA_GST
+	bool "nvidia-gst"
+	depends on BR2_PACKAGE_GSTREAMER || BR2_PACKAGE_GSTREAMER1
+	depends on !BR2_PACKAGE_GST_OMX
+	help
+		Gstreamer plugins and sample apps from nvidia/linux4tegra.
+
+		https://developer.nvidia.com/linux-tegra-rel-21
+
+comment "Nvidia GStreamer plugins need GStreamer 0.10 or 1.0"
+	depends on !BR2_PACKAGE_GSTREAMER && !BR2_PACKAGE_GSTREAMER1
+
+comment "Nvidia GStreamer plugins conflict gst-omx"
+	depends on BR2_PACKAGE_GST_OMX

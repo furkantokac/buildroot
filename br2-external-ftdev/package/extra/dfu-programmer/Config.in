@@ -1,0 +1,12 @@
+config BR2_PACKAGE_DFU_PROGRAMMER
+	bool "dfu-programmer"
+	select BR2_PACKAGE_LIBUSB
+	help
+	  dfu-programmer is a multi-platform command-line programmer for Atmel
+	  (8051, AVR, XMEGA & AVR32) chips with a USB bootloader supporting ISP.
+	  Most Atmel devices having a USB port come pre-programmed with the
+	  bootloader, and this is a lightweight alternative to Atmel's own
+	  FLIP/BatchISP program. This is a mostly Device Firmware Update (DFU)
+	  1.0 compliant user-space application.
+
+	  https://dfu-programmer.github.io/

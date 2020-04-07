@@ -1,0 +1,1 @@
+source "$BR2_EXTERNAL/package/fonts/freefont-ttf/Config.in"

@@ -1,0 +1,10 @@
+config BR2_PACKAGE_LIBTBB
+	bool "libtbb"
+	depends on BR2_ARCH = "i686" || BR2_ARCH = "x86_64" || BR2_ARM_CPU_ARMV7A || BR2_ARCH = "powerpc" || BR2_ARCH = "sparc"
+	help
+	  The Intel Threading Building Blocks library for C++.
+
+	  https://www.threadingbuildingblocks.org
+
+comment "libtbb is not supported on target arch"
+	depends on BR2_ARCH != "i686" && BR2_ARCH != "x86_64" && !BR2_ARM_CPU_ARMV7A && BR2_ARCH != "powerpc" && BR2_ARCH != "sparc"

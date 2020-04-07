@@ -1,0 +1,832 @@
+From 6c0fb8bb2d8700f3e7ac5be4b559eba4f22c75b0 Mon Sep 17 00:00:00 2001
+From: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+Date: Wed, 2 Nov 2016 17:31:35 +0100
+Subject: [PATCH] libpng: Add ARM intrinsic filters
+
+In the embedded copy of libpng, the code for the intrinsic filters tuned
+for ARM NEON is missing. Add it, and enable it if NEON is supported by
+the target cpu.
+
+Signed-off-by: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+---
+ Makefile.gnu                               |   1 +
+ Makefile.srcs                              |   8 +-
+ Source/LibPNG/arm/arm_init.c               | 134 +++++++++++
+ Source/LibPNG/arm/filter_neon.S            | 253 +++++++++++++++++++
+ Source/LibPNG/arm/filter_neon_intrinsics.c | 373 +++++++++++++++++++++++++++++
+ 5 files changed, 768 insertions(+), 1 deletion(-)
+ create mode 100644 Source/LibPNG/arm/arm_init.c
+ create mode 100644 Source/LibPNG/arm/filter_neon.S
+ create mode 100644 Source/LibPNG/arm/filter_neon_intrinsics.c
+
+diff --git a/Makefile.gnu b/Makefile.gnu
+index 9d136c6..bc23ab7 100644
+--- a/Makefile.gnu
++++ b/Makefile.gnu
+@@ -15,6 +15,7 @@ LIBRARIES = -lstdc++
+ 
+ MODULES = $(SRCS:.c=.o)
+ MODULES := $(MODULES:.cpp=.o)
++MODULES := $(MODULES:.S=.o)
+ CFLAGS ?= -O3 -fPIC -fexceptions -fvisibility=hidden
+ # OpenJPEG
+ CFLAGS += -DOPJ_STATIC
+diff --git a/Makefile.srcs b/Makefile.srcs
+index 2205fa0..c37a967 100644
+--- a/Makefile.srcs
++++ b/Makefile.srcs
+@@ -1,6 +1,12 @@
+ VER_MAJOR = 3
+ VER_MINOR = 17.0
+ SRCS = ./Source/FreeImage/BitmapAccess.cpp ./Source/FreeImage/ColorLookup.cpp ./Source/FreeImage/FreeImage.cpp ./Source/FreeImage/FreeImageC.c ./Source/FreeImage/FreeImageIO.cpp ./Source/FreeImage/GetType.cpp ./Source/FreeImage/MemoryIO.cpp ./Source/FreeImage/PixelAccess.cpp ./Source/FreeImage/J2KHelper.cpp ././Source/FreeImage/MNGHelper.cpp ./Source/FreeImage/Plugin.cpp ./Source/FreeImage/PluginBMP.cpp ./Source/FreeImage/PluginCUT.cpp ./Source/FreeImage/PluginDDS.cpp ./Source/FreeImage/PluginEXR.cpp ./Source/FreeImage/PluginG3.cpp ./Source/FreeImage/PluginGIF.cpp ./Source/FreeImage/PluginHDR.cpp ./Source/FreeImage/PluginICO.cpp ./Source/FreeImage/PluginIFF.cpp ./Source/FreeImage/PluginJ2K.cpp ././Source/FreeImage/PluginJNG.cpp ./Source/FreeImage/PluginJP2.cpp ./Source/FreeImage/PluginJPEG.cpp ././Source/FreeImage/PluginJXR.cpp ./Source/FreeImage/PluginKOALA.cpp ./Source/FreeImage/PluginMNG.cpp ./Source/FreeImage/PluginPCD.cpp ./Source/FreeImage/PluginPCX.cpp ./Source/FreeImage/PluginPFM.cpp ./Source/FreeImage/PluginPICT.cpp ./Source/FreeImage/PluginPNG.cpp ./Source/FreeImage/PluginPNM.cpp ./Source/FreeImage/PluginPSD.cpp ./Source/FreeImage/PluginRAS.cpp ./Source/FreeImage/PluginRAW.cpp ./Source/FreeImage/PluginSGI.cpp ./Source/FreeImage/PluginTARGA.cpp ./Source/FreeImage/PluginTIFF.cpp ./Source/FreeImage/PluginWBMP.cpp ././Source/FreeImage/PluginWebP.cpp ./Source/FreeImage/PluginXBM.cpp ./Source/FreeImage/PluginXPM.cpp ./Source/FreeImage/PSDParser.cpp ./Source/FreeImage/TIFFLogLuv.cpp ./Source/FreeImage/Conversion.cpp ./Source/FreeImage/Conversion16_555.cpp ./Source/FreeImage/Conversion16_565.cpp ./Source/FreeImage/Conversion24.cpp ./Source/FreeImage/Conversion32.cpp ./Source/FreeImage/Conversion4.cpp ./Source/FreeImage/Conversion8.cpp ./Source/FreeImage/ConversionFloat.cpp ./Source/FreeImage/ConversionRGB16.cpp ././Source/FreeImage/ConversionRGBA16.cpp ././Source/FreeImage/ConversionRGBAF.cpp ./Source/FreeImage/ConversionRGBF.cpp ./Source/FreeImage/ConversionType.cpp ./Source/FreeImage/ConversionUINT16.cpp ./Source/FreeImage/Halftoning.cpp ./Source/FreeImage/tmoColorConvert.cpp ./Source/FreeImage/tmoDrago03.cpp ./Source/FreeImage/tmoFattal02.cpp ./Source/FreeImage/tmoReinhard05.cpp ./Source/FreeImage/ToneMapping.cpp ././Source/FreeImage/LFPQuantizer.cpp ./Source/FreeImage/NNQuantizer.cpp ./Source/FreeImage/WuQuantizer.cpp ./Source/DeprecationManager/Deprecated.cpp ./Source/DeprecationManager/DeprecationMgr.cpp ./Source/FreeImage/CacheFile.cpp ./Source/FreeImage/MultiPage.cpp ./Source/FreeImage/ZLibInterface.cpp ./Source/Metadata/Exif.cpp ./Source/Metadata/FIRational.cpp ./Source/Metadata/FreeImageTag.cpp ./Source/Metadata/IPTC.cpp ./Source/Metadata/TagConversion.cpp ./Source/Metadata/TagLib.cpp ./Source/Metadata/XTIFF.cpp ./Source/FreeImageToolkit/Background.cpp ./Source/FreeImageToolkit/BSplineRotate.cpp ./Source/FreeImageToolkit/Channels.cpp ./Source/FreeImageToolkit/ClassicRotate.cpp ./Source/FreeImageToolkit/Colors.cpp ./Source/FreeImageToolkit/CopyPaste.cpp ./Source/FreeImageToolkit/Display.cpp ./Source/FreeImageToolkit/Flip.cpp ./Source/FreeImageToolkit/JPEGTransform.cpp ./Source/FreeImageToolkit/MultigridPoissonSolver.cpp ./Source/FreeImageToolkit/Rescale.cpp ./Source/FreeImageToolkit/Resize.cpp Source/LibJPEG/./jaricom.c Source/LibJPEG/jcapimin.c Source/LibJPEG/jcapistd.c Source/LibJPEG/./jcarith.c Source/LibJPEG/jccoefct.c Source/LibJPEG/jccolor.c Source/LibJPEG/jcdctmgr.c Source/LibJPEG/jchuff.c Source/LibJPEG/jcinit.c Source/LibJPEG/jcmainct.c Source/LibJPEG/jcmarker.c Source/LibJPEG/jcmaster.c Source/LibJPEG/jcomapi.c Source/LibJPEG/jcparam.c Source/LibJPEG/jcprepct.c Source/LibJPEG/jcsample.c Source/LibJPEG/jctrans.c Source/LibJPEG/jdapimin.c Source/LibJPEG/jdapistd.c Source/LibJPEG/./jdarith.c Source/LibJPEG/jdatadst.c Source/LibJPEG/jdatasrc.c Source/LibJPEG/jdcoefct.c Source/LibJPEG/jdcolor.c Source/LibJPEG/jddctmgr.c Source/LibJPEG/jdhuff.c Source/LibJPEG/jdinput.c Source/LibJPEG/jdmainct.c Source/LibJPEG/jdmarker.c Source/LibJPEG/jdmaster.c Source/LibJPEG/jdmerge.c Source/LibJPEG/jdpostct.c Source/LibJPEG/jdsample.c Source/LibJPEG/jdtrans.c Source/LibJPEG/jerror.c Source/LibJPEG/jfdctflt.c Source/LibJPEG/jfdctfst.c Source/LibJPEG/jfdctint.c Source/LibJPEG/jidctflt.c Source/LibJPEG/jidctfst.c Source/LibJPEG/jidctint.c Source/LibJPEG/jmemmgr.c Source/LibJPEG/jmemnobs.c Source/LibJPEG/jquant1.c Source/LibJPEG/jquant2.c Source/LibJPEG/jutils.c Source/LibJPEG/transupp.c Source/LibPNG/./png.c Source/LibPNG/./pngerror.c Source/LibPNG/./pngget.c Source/LibPNG/./pngmem.c Source/LibPNG/./pngpread.c Source/LibPNG/./pngread.c Source/LibPNG/./pngrio.c Source/LibPNG/./pngrtran.c Source/LibPNG/./pngrutil.c Source/LibPNG/./pngset.c Source/LibPNG/./pngtrans.c Source/LibPNG/./pngwio.c Source/LibPNG/./pngwrite.c Source/LibPNG/./pngwtran.c Source/LibPNG/./pngwutil.c Source/LibTIFF4/./tif_aux.c Source/LibTIFF4/./tif_close.c Source/LibTIFF4/./tif_codec.c Source/LibTIFF4/./tif_color.c Source/LibTIFF4/./tif_compress.c Source/LibTIFF4/./tif_dir.c Source/LibTIFF4/./tif_dirinfo.c Source/LibTIFF4/./tif_dirread.c Source/LibTIFF4/./tif_dirwrite.c Source/LibTIFF4/./tif_dumpmode.c Source/LibTIFF4/./tif_error.c Source/LibTIFF4/./tif_extension.c Source/LibTIFF4/./tif_fax3.c Source/LibTIFF4/./tif_fax3sm.c Source/LibTIFF4/./tif_flush.c Source/LibTIFF4/./tif_getimage.c Source/LibTIFF4/./tif_jpeg.c Source/LibTIFF4/./tif_luv.c Source/LibTIFF4/./tif_lzma.c Source/LibTIFF4/./tif_lzw.c Source/LibTIFF4/./tif_next.c Source/LibTIFF4/./tif_ojpeg.c Source/LibTIFF4/./tif_open.c Source/LibTIFF4/./tif_packbits.c Source/LibTIFF4/./tif_pixarlog.c Source/LibTIFF4/./tif_predict.c Source/LibTIFF4/./tif_print.c Source/LibTIFF4/./tif_read.c Source/LibTIFF4/./tif_strip.c Source/LibTIFF4/./tif_swab.c Source/LibTIFF4/./tif_thunder.c Source/LibTIFF4/./tif_tile.c Source/LibTIFF4/./tif_version.c Source/LibTIFF4/./tif_warning.c Source/LibTIFF4/./tif_write.c Source/LibTIFF4/./tif_zip.c Source/ZLib/./adler32.c Source/ZLib/./compress.c Source/ZLib/./crc32.c Source/ZLib/./deflate.c Source/ZLib/./gzclose.c Source/ZLib/./gzlib.c Source/ZLib/./gzread.c Source/ZLib/./gzwrite.c Source/ZLib/./infback.c Source/ZLib/./inffast.c Source/ZLib/./inflate.c Source/ZLib/./inftrees.c Source/ZLib/./trees.c Source/ZLib/./uncompr.c Source/ZLib/./zutil.c Source/LibOpenJPEG/bio.c Source/LibOpenJPEG/cio.c Source/LibOpenJPEG/dwt.c Source/LibOpenJPEG/event.c Source/LibOpenJPEG/./function_list.c Source/LibOpenJPEG/image.c Source/LibOpenJPEG/./invert.c Source/LibOpenJPEG/j2k.c Source/LibOpenJPEG/jp2.c Source/LibOpenJPEG/mct.c Source/LibOpenJPEG/mqc.c Source/LibOpenJPEG/openjpeg.c Source/LibOpenJPEG/./opj_clock.c Source/LibOpenJPEG/pi.c Source/LibOpenJPEG/raw.c Source/LibOpenJPEG/t1.c Source/LibOpenJPEG/t2.c Source/LibOpenJPEG/tcd.c Source/LibOpenJPEG/tgt.c Source/OpenEXR/./IlmImf/b44ExpLogTable.cpp Source/OpenEXR/./IlmImf/ImfAcesFile.cpp Source/OpenEXR/./IlmImf/ImfAttribute.cpp Source/OpenEXR/./IlmImf/ImfB44Compressor.cpp Source/OpenEXR/./IlmImf/ImfBoxAttribute.cpp Source/OpenEXR/./IlmImf/ImfChannelList.cpp Source/OpenEXR/./IlmImf/ImfChannelListAttribute.cpp Source/OpenEXR/./IlmImf/ImfChromaticities.cpp Source/OpenEXR/./IlmImf/ImfChromaticitiesAttribute.cpp Source/OpenEXR/./IlmImf/ImfCompositeDeepScanLine.cpp Source/OpenEXR/./IlmImf/ImfCompressionAttribute.cpp Source/OpenEXR/./IlmImf/ImfCompressor.cpp Source/OpenEXR/./IlmImf/ImfConvert.cpp Source/OpenEXR/./IlmImf/ImfCRgbaFile.cpp Source/OpenEXR/./IlmImf/ImfDeepCompositing.cpp Source/OpenEXR/./IlmImf/ImfDeepFrameBuffer.cpp Source/OpenEXR/./IlmImf/ImfDeepImageStateAttribute.cpp Source/OpenEXR/./IlmImf/ImfDeepScanLineInputFile.cpp Source/OpenEXR/./IlmImf/ImfDeepScanLineInputPart.cpp Source/OpenEXR/./IlmImf/ImfDeepScanLineOutputFile.cpp Source/OpenEXR/./IlmImf/ImfDeepScanLineOutputPart.cpp Source/OpenEXR/./IlmImf/ImfDeepTiledInputFile.cpp Source/OpenEXR/./IlmImf/ImfDeepTiledInputPart.cpp Source/OpenEXR/./IlmImf/ImfDeepTiledOutputFile.cpp Source/OpenEXR/./IlmImf/ImfDeepTiledOutputPart.cpp Source/OpenEXR/./IlmImf/ImfDoubleAttribute.cpp Source/OpenEXR/./IlmImf/ImfDwaCompressor.cpp Source/OpenEXR/./IlmImf/ImfEnvmap.cpp Source/OpenEXR/./IlmImf/ImfEnvmapAttribute.cpp Source/OpenEXR/./IlmImf/ImfFastHuf.cpp Source/OpenEXR/./IlmImf/ImfFloatAttribute.cpp Source/OpenEXR/./IlmImf/ImfFloatVectorAttribute.cpp Source/OpenEXR/./IlmImf/ImfFrameBuffer.cpp Source/OpenEXR/./IlmImf/ImfFramesPerSecond.cpp Source/OpenEXR/./IlmImf/ImfGenericInputFile.cpp Source/OpenEXR/./IlmImf/ImfGenericOutputFile.cpp Source/OpenEXR/./IlmImf/ImfHeader.cpp Source/OpenEXR/./IlmImf/ImfHuf.cpp Source/OpenEXR/./IlmImf/ImfInputFile.cpp Source/OpenEXR/./IlmImf/ImfInputPart.cpp Source/OpenEXR/./IlmImf/ImfInputPartData.cpp Source/OpenEXR/./IlmImf/ImfIntAttribute.cpp Source/OpenEXR/./IlmImf/ImfIO.cpp Source/OpenEXR/./IlmImf/ImfKeyCode.cpp Source/OpenEXR/./IlmImf/ImfKeyCodeAttribute.cpp Source/OpenEXR/./IlmImf/ImfLineOrderAttribute.cpp Source/OpenEXR/./IlmImf/ImfLut.cpp Source/OpenEXR/./IlmImf/ImfMatrixAttribute.cpp Source/OpenEXR/./IlmImf/ImfMisc.cpp Source/OpenEXR/./IlmImf/ImfMultiPartInputFile.cpp Source/OpenEXR/./IlmImf/ImfMultiPartOutputFile.cpp Source/OpenEXR/./IlmImf/ImfMultiView.cpp Source/OpenEXR/./IlmImf/ImfOpaqueAttribute.cpp Source/OpenEXR/./IlmImf/ImfOutputFile.cpp Source/OpenEXR/./IlmImf/ImfOutputPart.cpp Source/OpenEXR/./IlmImf/ImfOutputPartData.cpp Source/OpenEXR/./IlmImf/ImfPartType.cpp Source/OpenEXR/./IlmImf/ImfPizCompressor.cpp Source/OpenEXR/./IlmImf/ImfPreviewImage.cpp Source/OpenEXR/./IlmImf/ImfPreviewImageAttribute.cpp Source/OpenEXR/./IlmImf/ImfPxr24Compressor.cpp Source/OpenEXR/./IlmImf/ImfRational.cpp Source/OpenEXR/./IlmImf/ImfRationalAttribute.cpp Source/OpenEXR/./IlmImf/ImfRgbaFile.cpp Source/OpenEXR/./IlmImf/ImfRgbaYca.cpp Source/OpenEXR/./IlmImf/ImfRle.cpp Source/OpenEXR/./IlmImf/ImfRleCompressor.cpp Source/OpenEXR/./IlmImf/ImfScanLineInputFile.cpp Source/OpenEXR/./IlmImf/ImfStandardAttributes.cpp Source/OpenEXR/./IlmImf/ImfStdIO.cpp Source/OpenEXR/./IlmImf/ImfStringAttribute.cpp Source/OpenEXR/./IlmImf/ImfStringVectorAttribute.cpp Source/OpenEXR/./IlmImf/ImfSystemSpecific.cpp Source/OpenEXR/./IlmImf/ImfTestFile.cpp Source/OpenEXR/./IlmImf/ImfThreading.cpp Source/OpenEXR/./IlmImf/ImfTileDescriptionAttribute.cpp Source/OpenEXR/./IlmImf/ImfTiledInputFile.cpp Source/OpenEXR/./IlmImf/ImfTiledInputPart.cpp Source/OpenEXR/./IlmImf/ImfTiledMisc.cpp Source/OpenEXR/./IlmImf/ImfTiledOutputFile.cpp Source/OpenEXR/./IlmImf/ImfTiledOutputPart.cpp Source/OpenEXR/./IlmImf/ImfTiledRgbaFile.cpp Source/OpenEXR/./IlmImf/ImfTileOffsets.cpp Source/OpenEXR/./IlmImf/ImfTimeCode.cpp Source/OpenEXR/./IlmImf/ImfTimeCodeAttribute.cpp Source/OpenEXR/./IlmImf/ImfVecAttribute.cpp Source/OpenEXR/./IlmImf/ImfVersion.cpp Source/OpenEXR/./IlmImf/ImfWav.cpp Source/OpenEXR/./IlmImf/ImfZip.cpp Source/OpenEXR/./IlmImf/ImfZipCompressor.cpp Source/OpenEXR/./Imath/ImathBox.cpp Source/OpenEXR/./Imath/ImathColorAlgo.cpp Source/OpenEXR/./Imath/ImathFun.cpp Source/OpenEXR/./Imath/ImathMatrixAlgo.cpp Source/OpenEXR/./Imath/ImathRandom.cpp Source/OpenEXR/./Imath/ImathShear.cpp Source/OpenEXR/./Imath/ImathVec.cpp Source/OpenEXR/./Iex/IexBaseExc.cpp Source/OpenEXR/./Iex/IexThrowErrnoExc.cpp Source/OpenEXR/./Half/half.cpp Source/OpenEXR/./IlmThread/IlmThread.cpp Source/OpenEXR/./IlmThread/IlmThreadMutex.cpp Source/OpenEXR/./IlmThread/IlmThreadPool.cpp Source/OpenEXR/./IlmThread/IlmThreadSemaphore.cpp Source/OpenEXR/./IexMath/IexMathFloatExc.cpp Source/OpenEXR/./IexMath/IexMathFpu.cpp Source/LibRawLite/./internal/dcraw_common.cpp Source/LibRawLite/./internal/dcraw_fileio.cpp Source/LibRawLite/./internal/demosaic_packs.cpp Source/LibRawLite/./src/libraw_c_api.cpp Source/LibRawLite/./src/libraw_cxx.cpp Source/LibRawLite/./src/libraw_datastream.cpp Source/LibWebP/./src/dec/dec.alpha.c Source/LibWebP/./src/dec/dec.buffer.c Source/LibWebP/./src/dec/dec.frame.c Source/LibWebP/./src/dec/dec.idec.c Source/LibWebP/./src/dec/dec.io.c Source/LibWebP/./src/dec/dec.quant.c Source/LibWebP/./src/dec/dec.tree.c Source/LibWebP/./src/dec/dec.vp8.c Source/LibWebP/./src/dec/dec.vp8l.c Source/LibWebP/./src/dec/dec.webp.c Source/LibWebP/./src/dsp/dsp.alpha_processing.c Source/LibWebP/./src/dsp/dsp.alpha_processing_mips_dsp_r2.c Source/LibWebP/./src/dsp/dsp.alpha_processing_sse2.c Source/LibWebP/./src/dsp/dsp.argb.c Source/LibWebP/./src/dsp/dsp.argb_mips_dsp_r2.c Source/LibWebP/./src/dsp/dsp.argb_sse2.c Source/LibWebP/./src/dsp/dsp.cost.c Source/LibWebP/./src/dsp/dsp.cost_mips32.c Source/LibWebP/./src/dsp/dsp.cost_mips_dsp_r2.c Source/LibWebP/./src/dsp/dsp.cost_sse2.c Source/LibWebP/./src/dsp/dsp.cpu.c Source/LibWebP/./src/dsp/dsp.dec.c Source/LibWebP/./src/dsp/dsp.dec_clip_tables.c Source/LibWebP/./src/dsp/dsp.dec_mips32.c Source/LibWebP/./src/dsp/dsp.dec_mips_dsp_r2.c Source/LibWebP/./src/dsp/dsp.dec_neon.c Source/LibWebP/./src/dsp/dsp.dec_sse2.c Source/LibWebP/./src/dsp/dsp.enc.c Source/LibWebP/./src/dsp/dsp.enc_avx2.c Source/LibWebP/./src/dsp/dsp.enc_mips32.c Source/LibWebP/./src/dsp/dsp.enc_mips_dsp_r2.c Source/LibWebP/./src/dsp/dsp.enc_neon.c Source/LibWebP/./src/dsp/dsp.enc_sse2.c Source/LibWebP/./src/dsp/dsp.filters.c Source/LibWebP/./src/dsp/dsp.filters_mips_dsp_r2.c Source/LibWebP/./src/dsp/dsp.filters_sse2.c Source/LibWebP/./src/dsp/dsp.lossless.c Source/LibWebP/./src/dsp/dsp.lossless_mips32.c Source/LibWebP/./src/dsp/dsp.lossless_mips_dsp_r2.c Source/LibWebP/./src/dsp/dsp.lossless_neon.c Source/LibWebP/./src/dsp/dsp.lossless_sse2.c Source/LibWebP/./src/dsp/dsp.rescaler.c Source/LibWebP/./src/dsp/dsp.rescaler_mips32.c Source/LibWebP/./src/dsp/dsp.rescaler_mips_dsp_r2.c Source/LibWebP/./src/dsp/dsp.upsampling.c Source/LibWebP/./src/dsp/dsp.upsampling_mips_dsp_r2.c Source/LibWebP/./src/dsp/dsp.upsampling_neon.c Source/LibWebP/./src/dsp/dsp.upsampling_sse2.c Source/LibWebP/./src/dsp/dsp.yuv.c Source/LibWebP/./src/dsp/dsp.yuv_mips32.c Source/LibWebP/./src/dsp/dsp.yuv_mips_dsp_r2.c Source/LibWebP/./src/dsp/dsp.yuv_sse2.c Source/LibWebP/./src/enc/enc.alpha.c Source/LibWebP/./src/enc/enc.analysis.c Source/LibWebP/./src/enc/enc.backward_references.c Source/LibWebP/./src/enc/enc.config.c Source/LibWebP/./src/enc/enc.cost.c Source/LibWebP/./src/enc/enc.filter.c Source/LibWebP/./src/enc/enc.frame.c Source/LibWebP/./src/enc/enc.histogram.c Source/LibWebP/./src/enc/enc.iterator.c Source/LibWebP/./src/enc/enc.near_lossless.c Source/LibWebP/./src/enc/enc.picture.c Source/LibWebP/./src/enc/enc.picture_csp.c Source/LibWebP/./src/enc/enc.picture_psnr.c Source/LibWebP/./src/enc/enc.picture_rescale.c Source/LibWebP/./src/enc/enc.picture_tools.c Source/LibWebP/./src/enc/enc.quant.c Source/LibWebP/./src/enc/enc.syntax.c Source/LibWebP/./src/enc/enc.token.c Source/LibWebP/./src/enc/enc.tree.c Source/LibWebP/./src/enc/enc.vp8l.c Source/LibWebP/./src/enc/enc.webpenc.c Source/LibWebP/./src/utils/utils.bit_reader.c Source/LibWebP/./src/utils/utils.bit_writer.c Source/LibWebP/./src/utils/utils.color_cache.c Source/LibWebP/./src/utils/utils.filters.c Source/LibWebP/./src/utils/utils.huffman.c Source/LibWebP/./src/utils/utils.huffman_encode.c Source/LibWebP/./src/utils/utils.quant_levels.c Source/LibWebP/./src/utils/utils.quant_levels_dec.c Source/LibWebP/./src/utils/utils.random.c Source/LibWebP/./src/utils/utils.rescaler.c Source/LibWebP/./src/utils/utils.thread.c Source/LibWebP/./src/utils/utils.utils.c Source/LibWebP/./src/mux/mux.anim_encode.c Source/LibWebP/./src/mux/mux.muxedit.c Source/LibWebP/./src/mux/mux.muxinternal.c Source/LibWebP/./src/mux/mux.muxread.c Source/LibWebP/./src/demux/demux.demux.c Source/LibJXR/./image/decode/decode.c Source/LibJXR/./image/decode/JXRTranscode.c Source/LibJXR/./image/decode/postprocess.c Source/LibJXR/./image/decode/segdec.c Source/LibJXR/./image/decode/strdec.c Source/LibJXR/./image/decode/strdec_x86.c Source/LibJXR/./image/decode/strInvTransform.c Source/LibJXR/./image/decode/strPredQuantDec.c Source/LibJXR/./image/encode/encode.c Source/LibJXR/./image/encode/segenc.c Source/LibJXR/./image/encode/strenc.c Source/LibJXR/./image/encode/strenc_x86.c Source/LibJXR/./image/encode/strFwdTransform.c Source/LibJXR/./image/encode/strPredQuantEnc.c Source/LibJXR/./image/sys/adapthuff.c Source/LibJXR/./image/sys/image.c Source/LibJXR/./image/sys/strcodec.c Source/LibJXR/./image/sys/strPredQuant.c Source/LibJXR/./image/sys/strTransform.c Source/LibJXR/./jxrgluelib/JXRGlue.c Source/LibJXR/./jxrgluelib/JXRGlueJxr.c Source/LibJXR/./jxrgluelib/JXRGluePFC.c Source/LibJXR/./jxrgluelib/JXRMeta.c 
++HAVE_ARM_NEON = $(shell echo NEON=__ARM_NEON__,__ARM_NEON | \
++	    $(CC) -E - | grep ^NEON= | \
++	    sed -e 's/[^1]//g' -e 's/11/1/' \
++)
++ifeq ($(HAVE_ARM_NEON),1)
++SRCS += ./Source/LibPNG/arm/arm_init.c  ./Source/LibPNG/arm/filter_neon_intrinsics.c  ./Source/LibPNG/arm/filter_neon.S
++endif
+ INCLS = ./Examples/OpenGL/TextureManager/TextureManager.h ./Examples/Plugin/PluginCradle.h ./Examples/Generic/FIIO_Mem.h ./Source/MapIntrospector.h ./Source/FreeImage - Copie.h ./Source/CacheFile.h ./Source/LibTIFF/tiffconf.vc.h ./Source/LibTIFF/tif_config.h ./Source/LibTIFF/tif_fax3.h ./Source/LibTIFF/tif_config.vc.h ./Source/LibTIFF/tiffvers.h ./Source/LibTIFF/tiffio.h ./Source/LibTIFF/tif_config.wince.h ./Source/LibTIFF/tiffconf.wince.h ./Source/LibTIFF/tiff.h ./Source/LibTIFF/uvcode.h ./Source/LibTIFF/tif_dir.h ./Source/LibTIFF/t4.h ./Source/LibTIFF/tif_predict.h ./Source/LibTIFF/tiffiop.h ./Source/LibJPEG/cderror.h ./Source/LibJPEG/jmorecfg.h ./Source/LibJPEG/transupp.h ./Source/LibJPEG/jpeglib.h ./Source/LibJPEG/jversion.h ./Source/LibJPEG/jinclude.h ./Source/LibJPEG/jerror.h ./Source/LibJPEG/jconfig.h ./Source/LibJPEG/jdct.h ./Source/LibJPEG/cdjpeg.h ./Source/LibJPEG/jmemsys.h ./Source/LibJPEG/jpegint.h ./Source/Plugin.h ./Source/Metadata/FreeImageTag.h ./Source/Metadata/FIRational.h ./Source/ToneMapping.h ./Source/LibTIFF4/tiffconf.vc.h ./Source/LibTIFF4/tif_config.h ./Source/LibTIFF4/tif_fax3.h ./Source/LibTIFF4/tif_config.vc.h ./Source/LibTIFF4/tiffvers.h ./Source/LibTIFF4/tiffio.h ./Source/LibTIFF4/tif_config.wince.h ./Source/LibTIFF4/tiffconf.wince.h ./Source/LibTIFF4/tiff.h ./Source/LibTIFF4/uvcode.h ./Source/LibTIFF4/tif_dir.h ./Source/LibTIFF4/t4.h ./Source/LibTIFF4/tif_predict.h ./Source/LibTIFF4/tiffiop.h ./Source/LibTIFF4/tiffconf.h ./Source/LibWebP/src/dec/alphai.h ./Source/LibWebP/src/dec/vp8li.h ./Source/LibWebP/src/dec/decode_vp8.h ./Source/LibWebP/src/dec/webpi.h ./Source/LibWebP/src/dec/vp8i.h ./Source/LibWebP/src/enc/vp8enci.h ./Source/LibWebP/src/enc/histogram.h ./Source/LibWebP/src/enc/vp8li.h ./Source/LibWebP/src/enc/backward_references.h ./Source/LibWebP/src/enc/cost.h ./Source/LibWebP/src/utils/huffman_encode.h ./Source/LibWebP/src/utils/rescaler.h ./Source/LibWebP/src/utils/bit_writer.h ./Source/LibWebP/src/utils/huffman.h ./Source/LibWebP/src/utils/quant_levels.h ./Source/LibWebP/src/utils/thread.h ./Source/LibWebP/src/utils/filters.h ./Source/LibWebP/src/utils/random.h ./Source/LibWebP/src/utils/quant_levels_dec.h ./Source/LibWebP/src/utils/bit_reader_inl.h ./Source/LibWebP/src/utils/color_cache.h ./Source/LibWebP/src/utils/bit_reader.h ./Source/LibWebP/src/utils/endian_inl.h ./Source/LibWebP/src/utils/utils.h ./Source/LibWebP/src/mux/muxi.h ./Source/LibWebP/src/webp/mux.h ./Source/LibWebP/src/webp/types.h ./Source/LibWebP/src/webp/format_constants.h ./Source/LibWebP/src/webp/demux.h ./Source/LibWebP/src/webp/encode.h ./Source/LibWebP/src/webp/decode.h ./Source/LibWebP/src/webp/mux_types.h ./Source/LibWebP/src/dsp/yuv.h ./Source/LibWebP/src/dsp/yuv_tables_sse2.h ./Source/LibWebP/src/dsp/neon.h ./Source/LibWebP/src/dsp/mips_macro.h ./Source/LibWebP/src/dsp/dsp.h ./Source/LibWebP/src/dsp/lossless.h ./Source/FreeImageIO.h ./Source/LibMNG/libmng_data.h ./Source/LibMNG/libmng_jpeg.h ./Source/LibMNG/libmng_conf.h ./Source/LibMNG/libmng.h ./Source/LibMNG/libmng_trace.h ./Source/LibMNG/libmng_zlib.h ./Source/LibMNG/libmng_read.h ./Source/LibMNG/libmng_chunk_io.h ./Source/LibMNG/libmng_filter.h ./Source/LibMNG/libmng_cms.h ./Source/LibMNG/libmng_chunks.h ./Source/LibMNG/libmng_write.h ./Source/LibMNG/libmng_error.h ./Source/LibMNG/libmng_types.h ./Source/LibMNG/libmng_objects.h ./Source/LibMNG/libmng_chunk_prc.h ./Source/LibMNG/libmng_chunk_descr.h ./Source/LibMNG/libmng_display.h ./Source/LibMNG/libmng_pixels.h ./Source/LibMNG/libmng_object_prc.h ./Source/LibMNG/libmng_memory.h ./Source/LibMNG/libmng_dither.h ./Source/FreeImage.h ./Source/FreeImage/PSDParser.h ./Source/FreeImage/J2KHelper.h ./Source/ZLib/trees.h ./Source/ZLib/inffixed.h ./Source/ZLib/inflate.h ./Source/ZLib/zlib.h ./Source/ZLib/zconf.h ./Source/ZLib/inftrees.h ./Source/ZLib/zutil.h ./Source/ZLib/inffast.h ./Source/ZLib/crc32.h ./Source/ZLib/gzguts.h ./Source/ZLib/deflate.h ./Source/Quantizers.h ./Source/LibOpenJPEG/cio.h ./Source/LibOpenJPEG/mqc.h ./Source/LibOpenJPEG/cidx_manager.h ./Source/LibOpenJPEG/function_list.h ./Source/LibOpenJPEG/indexbox_manager.h ./Source/LibOpenJPEG/opj_config.h ./Source/LibOpenJPEG/opj_clock.h ./Source/LibOpenJPEG/event.h ./Source/LibOpenJPEG/opj_codec.h ./Source/LibOpenJPEG/pi.h ./Source/LibOpenJPEG/dwt.h ./Source/LibOpenJPEG/tgt.h ./Source/LibOpenJPEG/invert.h ./Source/LibOpenJPEG/opj_malloc.h ./Source/LibOpenJPEG/raw.h ./Source/LibOpenJPEG/jp2.h ./Source/LibOpenJPEG/bio.h ./Source/LibOpenJPEG/t2.h ./Source/LibOpenJPEG/mct.h ./Source/LibOpenJPEG/t1.h ./Source/LibOpenJPEG/t1_luts.h ./Source/LibOpenJPEG/j2k.h ./Source/LibOpenJPEG/opj_stdint.h ./Source/LibOpenJPEG/opj_config_private.h ./Source/LibOpenJPEG/opj_includes.h ./Source/LibOpenJPEG/opj_intmath.h ./Source/LibOpenJPEG/image.h ./Source/LibOpenJPEG/opj_inttypes.h ./Source/LibOpenJPEG/openjpeg.h ./Source/LibOpenJPEG/tcd.h ./Source/LibRawLite/libraw/libraw_version.h ./Source/LibRawLite/libraw/libraw_const.h ./Source/LibRawLite/libraw/libraw.h ./Source/LibRawLite/libraw/libraw_types.h ./Source/LibRawLite/libraw/libraw_alloc.h ./Source/LibRawLite/libraw/libraw_datastream.h ./Source/LibRawLite/libraw/libraw_internal.h ./Source/LibRawLite/internal/var_defines.h ./Source/LibRawLite/internal/defines.h ./Source/LibRawLite/internal/libraw_internal_funcs.h ./Source/LibPNG/png.h ./Source/LibPNG/pngdebug.h ./Source/LibPNG/pnginfo.h ./Source/LibPNG/pnglibconf.h ./Source/LibPNG/pngstruct.h ./Source/LibPNG/pngpriv.h ./Source/LibPNG/pngconf.h ./Source/LibJXR/common/include/wmspecstrings_strict.h ./Source/LibJXR/common/include/wmspecstring.h ./Source/LibJXR/common/include/guiddef.h ./Source/LibJXR/common/include/wmsal.h ./Source/LibJXR/common/include/wmspecstrings_undef.h ./Source/LibJXR/common/include/wmspecstrings_adt.h ./Source/LibJXR/jxrgluelib/JXRGlue.h ./Source/LibJXR/jxrgluelib/JXRMeta.h ./Source/LibJXR/image/sys/xplatform_image.h ./Source/LibJXR/image/sys/strTransform.h ./Source/LibJXR/image/sys/windowsmediaphoto.h ./Source/LibJXR/image/sys/strcodec.h ./Source/LibJXR/image/sys/ansi.h ./Source/LibJXR/image/sys/perfTimer.h ./Source/LibJXR/image/sys/common.h ./Source/LibJXR/image/decode/decode.h ./Source/LibJXR/image/x86/x86.h ./Source/LibJXR/image/encode/encode.h ./Source/Utilities.h ./Source/FreeImageToolkit/Resize.h ./Source/FreeImageToolkit/Filters.h ./Source/OpenEXR/OpenEXRConfig.h ./Source/OpenEXR/IexMath/IexMathFloatExc.h ./Source/OpenEXR/IexMath/IexMathFpu.h ./Source/OpenEXR/IexMath/IexMathIeeeExc.h ./Source/OpenEXR/IlmThread/IlmThread.h ./Source/OpenEXR/IlmThread/IlmThreadMutex.h ./Source/OpenEXR/IlmThread/IlmThreadForward.h ./Source/OpenEXR/IlmThread/IlmThreadExport.h ./Source/OpenEXR/IlmThread/IlmThreadSemaphore.h ./Source/OpenEXR/IlmThread/IlmThreadPool.h ./Source/OpenEXR/IlmThread/IlmThreadNamespace.h ./Source/OpenEXR/Iex/IexErrnoExc.h ./Source/OpenEXR/Iex/IexMacros.h ./Source/OpenEXR/Iex/IexForward.h ./Source/OpenEXR/Iex/IexExport.h ./Source/OpenEXR/Iex/IexThrowErrnoExc.h ./Source/OpenEXR/Iex/IexNamespace.h ./Source/OpenEXR/Iex/IexMathExc.h ./Source/OpenEXR/Iex/IexBaseExc.h ./Source/OpenEXR/Iex/Iex.h ./Source/OpenEXR/Imath/ImathColorAlgo.h ./Source/OpenEXR/Imath/ImathNamespace.h ./Source/OpenEXR/Imath/ImathVec.h ./Source/OpenEXR/Imath/ImathGL.h ./Source/OpenEXR/Imath/ImathSphere.h ./Source/OpenEXR/Imath/ImathEuler.h ./Source/OpenEXR/Imath/ImathLimits.h ./Source/OpenEXR/Imath/ImathQuat.h ./Source/OpenEXR/Imath/ImathRoots.h ./Source/OpenEXR/Imath/ImathFun.h ./Source/OpenEXR/Imath/ImathExport.h ./Source/OpenEXR/Imath/ImathShear.h ./Source/OpenEXR/Imath/ImathPlane.h ./Source/OpenEXR/Imath/ImathForward.h ./Source/OpenEXR/Imath/ImathHalfLimits.h ./Source/OpenEXR/Imath/ImathFrustumTest.h ./Source/OpenEXR/Imath/ImathMatrixAlgo.h ./Source/OpenEXR/Imath/ImathVecAlgo.h ./Source/OpenEXR/Imath/ImathInterval.h ./Source/OpenEXR/Imath/ImathBox.h ./Source/OpenEXR/Imath/ImathFrame.h ./Source/OpenEXR/Imath/ImathColor.h ./Source/OpenEXR/Imath/ImathMath.h ./Source/OpenEXR/Imath/ImathLine.h ./Source/OpenEXR/Imath/ImathBoxAlgo.h ./Source/OpenEXR/Imath/ImathFrustum.h ./Source/OpenEXR/Imath/ImathExc.h ./Source/OpenEXR/Imath/ImathLineAlgo.h ./Source/OpenEXR/Imath/ImathRandom.h ./Source/OpenEXR/Imath/ImathInt64.h ./Source/OpenEXR/Imath/ImathGLU.h ./Source/OpenEXR/Imath/ImathPlatform.h ./Source/OpenEXR/Imath/ImathMatrix.h ./Source/OpenEXR/IlmImf/ImfDeepScanLineOutputPart.h ./Source/OpenEXR/IlmImf/ImfDeepScanLineInputFile.h ./Source/OpenEXR/IlmImf/ImfIO.h ./Source/OpenEXR/IlmImf/ImfStdIO.h ./Source/OpenEXR/IlmImf/ImfPreviewImage.h ./Source/OpenEXR/IlmImf/ImfAttribute.h ./Source/OpenEXR/IlmImf/ImfDwaCompressor.h ./Source/OpenEXR/IlmImf/ImfChannelList.h ./Source/OpenEXR/IlmImf/ImfInt64.h ./Source/OpenEXR/IlmImf/ImfGenericOutputFile.h ./Source/OpenEXR/IlmImf/ImfHuf.h ./Source/OpenEXR/IlmImf/ImfOptimizedPixelReading.h ./Source/OpenEXR/IlmImf/b44ExpLogTable.h ./Source/OpenEXR/IlmImf/ImfMultiPartOutputFile.h ./Source/OpenEXR/IlmImf/ImfTileDescriptionAttribute.h ./Source/OpenEXR/IlmImf/ImfFastHuf.h ./Source/OpenEXR/IlmImf/dwaLookups.h ./Source/OpenEXR/IlmImf/ImfCompositeDeepScanLine.h ./Source/OpenEXR/IlmImf/ImfDeepFrameBuffer.h ./Source/OpenEXR/IlmImf/ImfInputPartData.h ./Source/OpenEXR/IlmImf/ImfAcesFile.h ./Source/OpenEXR/IlmImf/ImfRgbaYca.h ./Source/OpenEXR/IlmImf/ImfThreading.h ./Source/OpenEXR/IlmImf/ImfWav.h ./Source/OpenEXR/IlmImf/ImfChromaticitiesAttribute.h ./Source/OpenEXR/IlmImf/ImfDwaCompressorSimd.h ./Source/OpenEXR/IlmImf/ImfNamespace.h ./Source/OpenEXR/IlmImf/ImfMatrixAttribute.h ./Source/OpenEXR/IlmImf/ImfTimeCodeAttribute.h ./Source/OpenEXR/IlmImf/ImfInputFile.h ./Source/OpenEXR/IlmImf/ImfDeepScanLineInputPart.h ./Source/OpenEXR/IlmImf/ImfFloatAttribute.h ./Source/OpenEXR/IlmImf/ImfPxr24Compressor.h ./Source/OpenEXR/IlmImf/ImfCompressor.h ./Source/OpenEXR/IlmImf/ImfCRgbaFile.h ./Source/OpenEXR/IlmImf/ImfOutputFile.h ./Source/OpenEXR/IlmImf/ImfTiledInputPart.h ./Source/OpenEXR/IlmImf/ImfRationalAttribute.h ./Source/OpenEXR/IlmImf/ImfTileOffsets.h ./Source/OpenEXR/IlmImf/ImfInputStreamMutex.h ./Source/OpenEXR/IlmImf/ImfIntAttribute.h ./Source/OpenEXR/IlmImf/ImfTiledOutputPart.h ./Source/OpenEXR/IlmImf/ImfPartType.h ./Source/OpenEXR/IlmImf/ImfTiledInputFile.h ./Source/OpenEXR/IlmImf/ImfStringAttribute.h ./Source/OpenEXR/IlmImf/ImfDeepTiledOutputPart.h ./Source/OpenEXR/IlmImf/ImfRleCompressor.h ./Source/OpenEXR/IlmImf/ImfChromaticities.h ./Source/OpenEXR/IlmImf/ImfTestFile.h ./Source/OpenEXR/IlmImf/ImfInputPart.h ./Source/OpenEXR/IlmImf/ImfXdr.h ./Source/OpenEXR/IlmImf/ImfOutputPart.h ./Source/OpenEXR/IlmImf/ImfExport.h ./Source/OpenEXR/IlmImf/ImfRgba.h ./Source/OpenEXR/IlmImf/ImfLineOrder.h ./Source/OpenEXR/IlmImf/ImfCompression.h ./Source/OpenEXR/IlmImf/ImfTiledMisc.h ./Source/OpenEXR/IlmImf/ImfFramesPerSecond.h ./Source/OpenEXR/IlmImf/ImfZipCompressor.h ./Source/OpenEXR/IlmImf/ImfKeyCodeAttribute.h ./Source/OpenEXR/IlmImf/ImfFloatVectorAttribute.h ./Source/OpenEXR/IlmImf/ImfMultiPartInputFile.h ./Source/OpenEXR/IlmImf/ImfDeepTiledOutputFile.h ./Source/OpenEXR/IlmImf/ImfDeepScanLineOutputFile.h ./Source/OpenEXR/IlmImf/ImfRational.h ./Source/OpenEXR/IlmImf/ImfDeepImageStateAttribute.h ./Source/OpenEXR/IlmImf/ImfChannelListAttribute.h ./Source/OpenEXR/IlmImf/ImfDeepCompositing.h ./Source/OpenEXR/IlmImf/ImfOutputPartData.h ./Source/OpenEXR/IlmImf/ImfDeepTiledInputPart.h ./Source/OpenEXR/IlmImf/ImfPreviewImageAttribute.h ./Source/OpenEXR/IlmImf/ImfFrameBuffer.h ./Source/OpenEXR/IlmImf/ImfDeepImageState.h ./Source/OpenEXR/IlmImf/ImfOpaqueAttribute.h ./Source/OpenEXR/IlmImf/ImfEnvmapAttribute.h ./Source/OpenEXR/IlmImf/ImfPizCompressor.h ./Source/OpenEXR/IlmImf/ImfStringVectorAttribute.h ./Source/OpenEXR/IlmImf/ImfMultiView.h ./Source/OpenEXR/IlmImf/ImfAutoArray.h ./Source/OpenEXR/IlmImf/ImfLut.h ./Source/OpenEXR/IlmImf/ImfTiledOutputFile.h ./Source/OpenEXR/IlmImf/ImfBoxAttribute.h ./Source/OpenEXR/IlmImf/ImfCheckedArithmetic.h ./Source/OpenEXR/IlmImf/ImfB44Compressor.h ./Source/OpenEXR/IlmImf/ImfSystemSpecific.h ./Source/OpenEXR/IlmImf/ImfRgbaFile.h ./Source/OpenEXR/IlmImf/ImfTimeCode.h ./Source/OpenEXR/IlmImf/ImfVecAttribute.h ./Source/OpenEXR/IlmImf/ImfDeepTiledInputFile.h ./Source/OpenEXR/IlmImf/ImfZip.h ./Source/OpenEXR/IlmImf/ImfConvert.h ./Source/OpenEXR/IlmImf/ImfMisc.h ./Source/OpenEXR/IlmImf/ImfHeader.h ./Source/OpenEXR/IlmImf/ImfForward.h ./Source/OpenEXR/IlmImf/ImfPartHelper.h ./Source/OpenEXR/IlmImf/ImfKeyCode.h ./Source/OpenEXR/IlmImf/ImfVersion.h ./Source/OpenEXR/IlmImf/ImfStandardAttributes.h ./Source/OpenEXR/IlmImf/ImfPixelType.h ./Source/OpenEXR/IlmImf/ImfName.h ./Source/OpenEXR/IlmImf/ImfSimd.h ./Source/OpenEXR/IlmImf/ImfArray.h ./Source/OpenEXR/IlmImf/ImfOutputStreamMutex.h ./Source/OpenEXR/IlmImf/ImfTiledRgbaFile.h ./Source/OpenEXR/IlmImf/ImfRle.h ./Source/OpenEXR/IlmImf/ImfScanLineInputFile.h ./Source/OpenEXR/IlmImf/ImfDoubleAttribute.h ./Source/OpenEXR/IlmImf/ImfGenericInputFile.h ./Source/OpenEXR/IlmImf/ImfEnvmap.h ./Source/OpenEXR/IlmImf/ImfLineOrderAttribute.h ./Source/OpenEXR/IlmImf/ImfTileDescription.h ./Source/OpenEXR/IlmImf/ImfCompressionAttribute.h ./Source/OpenEXR/IlmBaseConfig.h ./Source/OpenEXR/Half/halfFunction.h ./Source/OpenEXR/Half/halfExport.h ./Source/OpenEXR/Half/half.h ./Source/OpenEXR/Half/eLut.h ./Source/OpenEXR/Half/halfLimits.h ./Source/OpenEXR/Half/toFloat.h ./Source/DeprecationManager/DeprecationMgr.h ./Wrapper/FreeImage.NET/cpp/FreeImageIO/FreeImageIO.Net.h ./Wrapper/FreeImage.NET/cpp/FreeImageIO/Stdafx.h ./Wrapper/FreeImage.NET/cpp/FreeImageIO/resource.h ./Wrapper/FreeImagePlus/FreeImagePlus.h ./Wrapper/FreeImagePlus/test/fipTest.h ./TestAPI/TestSuite.h
+-
+ INCLUDE = -I. -ISource -ISource/Metadata -ISource/FreeImageToolkit -ISource/LibJPEG -ISource/LibPNG -ISource/LibTIFF4 -ISource/ZLib -ISource/LibOpenJPEG -ISource/OpenEXR -ISource/OpenEXR/Half -ISource/OpenEXR/Iex -ISource/OpenEXR/IlmImf -ISource/OpenEXR/IlmThread -ISource/OpenEXR/Imath -ISource/OpenEXR/IexMath -ISource/LibRawLite -ISource/LibRawLite/dcraw -ISource/LibRawLite/internal -ISource/LibRawLite/libraw -ISource/LibRawLite/src -ISource/LibWebP -ISource/LibJXR -ISource/LibJXR/common/include -ISource/LibJXR/image/sys -ISource/LibJXR/jxrgluelib
+diff --git a/Source/LibPNG/arm/arm_init.c b/Source/LibPNG/arm/arm_init.c
+new file mode 100644
+index 0000000..fb3d50d
+--- /dev/null
++++ b/Source/LibPNG/arm/arm_init.c
+@@ -0,0 +1,134 @@
++
++/* arm_init.c - NEON optimised filter functions
++ *
++ * Copyright (c) 2014 Glenn Randers-Pehrson
++ * Written by Mans Rullgard, 2011.
++ * Last changed in libpng 1.6.16 [December 22, 2014]
++ *
++ * This code is released under the libpng license.
++ * For conditions of distribution and use, see the disclaimer
++ * and license in png.h
++ */
++/* Below, after checking __linux__, various non-C90 POSIX 1003.1 functions are
++ * called.
++ */
++#define _POSIX_SOURCE 1
++
++#include "../pngpriv.h"
++
++#ifdef PNG_READ_SUPPORTED
++
++#if PNG_ARM_NEON_OPT > 0
++#ifdef PNG_ARM_NEON_CHECK_SUPPORTED /* Do run-time checks */
++/* WARNING: it is strongly recommended that you do not build libpng with
++ * run-time checks for CPU features if at all possible.  In the case of the ARM
++ * NEON instructions there is no processor-specific way of detecting the
++ * presence of the required support, therefore run-time detection is extremely
++ * OS specific.
++ *
++ * You may set the macro PNG_ARM_NEON_FILE to the file name of file containing
++ * a fragment of C source code which defines the png_have_neon function.  There
++ * are a number of implementations in contrib/arm-neon, but the only one that
++ * has partial support is contrib/arm-neon/linux.c - a generic Linux
++ * implementation which reads /proc/cpufino.
++ */
++#ifndef PNG_ARM_NEON_FILE
++#  ifdef __linux__
++#     define PNG_ARM_NEON_FILE "contrib/arm-neon/linux.c"
++#  endif
++#endif
++
++#ifdef PNG_ARM_NEON_FILE
++
++#include <signal.h> /* for sig_atomic_t */
++static int png_have_neon(png_structp png_ptr);
++#include PNG_ARM_NEON_FILE
++
++#else  /* PNG_ARM_NEON_FILE */
++#  error "PNG_ARM_NEON_FILE undefined: no support for run-time ARM NEON checks"
++#endif /* PNG_ARM_NEON_FILE */
++#endif /* PNG_ARM_NEON_CHECK_SUPPORTED */
++
++#ifndef PNG_ALIGNED_MEMORY_SUPPORTED
++#  error "ALIGNED_MEMORY is required; set: -DPNG_ALIGNED_MEMORY_SUPPORTED"
++#endif
++
++void
++png_init_filter_functions_neon(png_structp pp, unsigned int bpp)
++{
++   /* The switch statement is compiled in for ARM_NEON_API, the call to
++    * png_have_neon is compiled in for ARM_NEON_CHECK.  If both are defined
++    * the check is only performed if the API has not set the NEON option on
++    * or off explicitly.  In this case the check controls what happens.
++    *
++    * If the CHECK is not compiled in and the option is UNSET the behavior prior
++    * to 1.6.7 was to use the NEON code - this was a bug caused by having the
++    * wrong order of the 'ON' and 'default' cases.  UNSET now defaults to OFF,
++    * as documented in png.h
++    */
++#ifdef PNG_ARM_NEON_API_SUPPORTED
++   switch ((pp->options >> PNG_ARM_NEON) & 3)
++   {
++      case PNG_OPTION_UNSET:
++         /* Allow the run-time check to execute if it has been enabled -
++          * thus both API and CHECK can be turned on.  If it isn't supported
++          * this case will fall through to the 'default' below, which just
++          * returns.
++          */
++#endif /* PNG_ARM_NEON_API_SUPPORTED */
++#ifdef PNG_ARM_NEON_CHECK_SUPPORTED
++         {
++            static volatile sig_atomic_t no_neon = -1; /* not checked */
++
++            if (no_neon < 0)
++               no_neon = !png_have_neon(pp);
++
++            if (no_neon)
++               return;
++         }
++#ifdef PNG_ARM_NEON_API_SUPPORTED
++         break;
++#endif
++#endif /* PNG_ARM_NEON_CHECK_SUPPORTED */
++
++#ifdef PNG_ARM_NEON_API_SUPPORTED
++      default: /* OFF or INVALID */
++         return;
++
++      case PNG_OPTION_ON:
++         /* Option turned on */
++         break;
++   }
++#endif
++
++   /* IMPORTANT: any new external functions used here must be declared using
++    * PNG_INTERNAL_FUNCTION in ../pngpriv.h.  This is required so that the
++    * 'prefix' option to configure works:
++    *
++    *    ./configure --with-libpng-prefix=foobar_
++    *
++    * Verify you have got this right by running the above command, doing a build
++    * and examining pngprefix.h; it must contain a #define for every external
++    * function you add.  (Notice that this happens automatically for the
++    * initialization function.)
++    */
++   pp->read_filter[PNG_FILTER_VALUE_UP-1] = png_read_filter_row_up_neon;
++
++   if (bpp == 3)
++   {
++      pp->read_filter[PNG_FILTER_VALUE_SUB-1] = png_read_filter_row_sub3_neon;
++      pp->read_filter[PNG_FILTER_VALUE_AVG-1] = png_read_filter_row_avg3_neon;
++      pp->read_filter[PNG_FILTER_VALUE_PAETH-1] =
++         png_read_filter_row_paeth3_neon;
++   }
++
++   else if (bpp == 4)
++   {
++      pp->read_filter[PNG_FILTER_VALUE_SUB-1] = png_read_filter_row_sub4_neon;
++      pp->read_filter[PNG_FILTER_VALUE_AVG-1] = png_read_filter_row_avg4_neon;
++      pp->read_filter[PNG_FILTER_VALUE_PAETH-1] =
++          png_read_filter_row_paeth4_neon;
++   }
++}
++#endif /* PNG_ARM_NEON_OPT > 0 */
++#endif /* READ */
+diff --git a/Source/LibPNG/arm/filter_neon.S b/Source/LibPNG/arm/filter_neon.S
+new file mode 100644
+index 0000000..3b061d6
+--- /dev/null
++++ b/Source/LibPNG/arm/filter_neon.S
+@@ -0,0 +1,253 @@
++
++/* filter_neon.S - NEON optimised filter functions
++ *
++ * Copyright (c) 2014 Glenn Randers-Pehrson
++ * Written by Mans Rullgard, 2011.
++ * Last changed in libpng 1.6.16 [December 22, 2014]
++ *
++ * This code is released under the libpng license.
++ * For conditions of distribution and use, see the disclaimer
++ * and license in png.h
++ */
++
++/* This is required to get the symbol renames, which are #defines, and the
++ * definitions (or not) of PNG_ARM_NEON_OPT and PNG_ARM_NEON_IMPLEMENTATION.
++ */
++#define PNG_VERSION_INFO_ONLY
++#include "../pngpriv.h"
++
++#if defined(__linux__) && defined(__ELF__)
++.section .note.GNU-stack,"",%progbits /* mark stack as non-executable */
++#endif
++
++#ifdef PNG_READ_SUPPORTED
++
++/* Assembler NEON support - only works for 32-bit ARM (i.e. it does not work for
++ * ARM64).  The code in arm/filter_neon_intrinsics.c supports ARM64, however it
++ * only works if -mfpu=neon is specified on the GCC command line.  See pngpriv.h
++ * for the logic which sets PNG_USE_ARM_NEON_ASM:
++ */
++#if PNG_ARM_NEON_IMPLEMENTATION == 2 /* hand-coded assembler */
++
++#if PNG_ARM_NEON_OPT > 0
++
++#ifdef __ELF__
++#   define ELF
++#else
++#   define ELF @
++#endif
++
++        .arch armv7-a
++        .fpu  neon
++
++.macro  func    name, export=0
++    .macro endfunc
++ELF     .size   \name, . - \name
++        .endfunc
++        .purgem endfunc
++    .endm
++        .text
++
++        /* Explicitly specifying alignment here because some versions of
++         * GAS don't align code correctly.  This is harmless in correctly
++         * written versions of GAS.
++         */
++        .align 2
++
++    .if \export
++        .global \name
++    .endif
++ELF     .type   \name, STT_FUNC
++        .func   \name
++\name:
++.endm
++
++func    png_read_filter_row_sub4_neon, export=1
++        ldr             r3,  [r0, #4]           @ rowbytes
++        vmov.i8         d3,  #0
++1:
++        vld4.32         {d4[],d5[],d6[],d7[]},    [r1,:128]
++        vadd.u8         d0,  d3,  d4
++        vadd.u8         d1,  d0,  d5
++        vadd.u8         d2,  d1,  d6
++        vadd.u8         d3,  d2,  d7
++        vst4.32         {d0[0],d1[0],d2[0],d3[0]},[r1,:128]!
++        subs            r3,  r3,  #16
++        bgt             1b
++
++        bx              lr
++endfunc
++
++func    png_read_filter_row_sub3_neon, export=1
++        ldr             r3,  [r0, #4]           @ rowbytes
++        vmov.i8         d3,  #0
++        mov             r0,  r1
++        mov             r2,  #3
++        mov             r12, #12
++        vld1.8          {q11},    [r0], r12
++1:
++        vext.8          d5,  d22, d23, #3
++        vadd.u8         d0,  d3,  d22
++        vext.8          d6,  d22, d23, #6
++        vadd.u8         d1,  d0,  d5
++        vext.8          d7,  d23, d23, #1
++        vld1.8          {q11},    [r0], r12
++        vst1.32         {d0[0]},  [r1,:32], r2
++        vadd.u8         d2,  d1,  d6
++        vst1.32         {d1[0]},  [r1], r2
++        vadd.u8         d3,  d2,  d7
++        vst1.32         {d2[0]},  [r1], r2
++        vst1.32         {d3[0]},  [r1], r2
++        subs            r3,  r3,  #12
++        bgt             1b
++
++        bx              lr
++endfunc
++
++func    png_read_filter_row_up_neon, export=1
++        ldr             r3,  [r0, #4]           @ rowbytes
++1:
++        vld1.8          {q0}, [r1,:128]
++        vld1.8          {q1}, [r2,:128]!
++        vadd.u8         q0,  q0,  q1
++        vst1.8          {q0}, [r1,:128]!
++        subs            r3,  r3,  #16
++        bgt             1b
++
++        bx              lr
++endfunc
++
++func    png_read_filter_row_avg4_neon, export=1
++        ldr             r12, [r0, #4]           @ rowbytes
++        vmov.i8         d3,  #0
++1:
++        vld4.32         {d4[],d5[],d6[],d7[]},    [r1,:128]
++        vld4.32         {d16[],d17[],d18[],d19[]},[r2,:128]!
++        vhadd.u8        d0,  d3,  d16
++        vadd.u8         d0,  d0,  d4
++        vhadd.u8        d1,  d0,  d17
++        vadd.u8         d1,  d1,  d5
++        vhadd.u8        d2,  d1,  d18
++        vadd.u8         d2,  d2,  d6
++        vhadd.u8        d3,  d2,  d19
++        vadd.u8         d3,  d3,  d7
++        vst4.32         {d0[0],d1[0],d2[0],d3[0]},[r1,:128]!
++        subs            r12, r12, #16
++        bgt             1b
++
++        bx              lr
++endfunc
++
++func    png_read_filter_row_avg3_neon, export=1
++        push            {r4,lr}
++        ldr             r12, [r0, #4]           @ rowbytes
++        vmov.i8         d3,  #0
++        mov             r0,  r1
++        mov             r4,  #3
++        mov             lr,  #12
++        vld1.8          {q11},    [r0], lr
++1:
++        vld1.8          {q10},    [r2], lr
++        vext.8          d5,  d22, d23, #3
++        vhadd.u8        d0,  d3,  d20
++        vext.8          d17, d20, d21, #3
++        vadd.u8         d0,  d0,  d22
++        vext.8          d6,  d22, d23, #6
++        vhadd.u8        d1,  d0,  d17
++        vext.8          d18, d20, d21, #6
++        vadd.u8         d1,  d1,  d5
++        vext.8          d7,  d23, d23, #1
++        vld1.8          {q11},    [r0], lr
++        vst1.32         {d0[0]},  [r1,:32], r4
++        vhadd.u8        d2,  d1,  d18
++        vst1.32         {d1[0]},  [r1], r4
++        vext.8          d19, d21, d21, #1
++        vadd.u8         d2,  d2,  d6
++        vhadd.u8        d3,  d2,  d19
++        vst1.32         {d2[0]},  [r1], r4
++        vadd.u8         d3,  d3,  d7
++        vst1.32         {d3[0]},  [r1], r4
++        subs            r12, r12, #12
++        bgt             1b
++
++        pop             {r4,pc}
++endfunc
++
++.macro  paeth           rx,  ra,  rb,  rc
++        vaddl.u8        q12, \ra, \rb           @ a + b
++        vaddl.u8        q15, \rc, \rc           @ 2*c
++        vabdl.u8        q13, \rb, \rc           @ pa
++        vabdl.u8        q14, \ra, \rc           @ pb
++        vabd.u16        q15, q12, q15           @ pc
++        vcle.u16        q12, q13, q14           @ pa <= pb
++        vcle.u16        q13, q13, q15           @ pa <= pc
++        vcle.u16        q14, q14, q15           @ pb <= pc
++        vand            q12, q12, q13           @ pa <= pb && pa <= pc
++        vmovn.u16       d28, q14
++        vmovn.u16       \rx, q12
++        vbsl            d28, \rb, \rc
++        vbsl            \rx, \ra, d28
++.endm
++
++func    png_read_filter_row_paeth4_neon, export=1
++        ldr             r12, [r0, #4]           @ rowbytes
++        vmov.i8         d3,  #0
++        vmov.i8         d20, #0
++1:
++        vld4.32         {d4[],d5[],d6[],d7[]},    [r1,:128]
++        vld4.32         {d16[],d17[],d18[],d19[]},[r2,:128]!
++        paeth           d0,  d3,  d16, d20
++        vadd.u8         d0,  d0,  d4
++        paeth           d1,  d0,  d17, d16
++        vadd.u8         d1,  d1,  d5
++        paeth           d2,  d1,  d18, d17
++        vadd.u8         d2,  d2,  d6
++        paeth           d3,  d2,  d19, d18
++        vmov            d20, d19
++        vadd.u8         d3,  d3,  d7
++        vst4.32         {d0[0],d1[0],d2[0],d3[0]},[r1,:128]!
++        subs            r12, r12, #16
++        bgt             1b
++
++        bx              lr
++endfunc
++
++func    png_read_filter_row_paeth3_neon, export=1
++        push            {r4,lr}
++        ldr             r12, [r0, #4]           @ rowbytes
++        vmov.i8         d3,  #0
++        vmov.i8         d4,  #0
++        mov             r0,  r1
++        mov             r4,  #3
++        mov             lr,  #12
++        vld1.8          {q11},    [r0], lr
++1:
++        vld1.8          {q10},    [r2], lr
++        paeth           d0,  d3,  d20, d4
++        vext.8          d5,  d22, d23, #3
++        vadd.u8         d0,  d0,  d22
++        vext.8          d17, d20, d21, #3
++        paeth           d1,  d0,  d17, d20
++        vst1.32         {d0[0]},  [r1,:32], r4
++        vext.8          d6,  d22, d23, #6
++        vadd.u8         d1,  d1,  d5
++        vext.8          d18, d20, d21, #6
++        paeth           d2,  d1,  d18, d17
++        vext.8          d7,  d23, d23, #1
++        vld1.8          {q11},    [r0], lr
++        vst1.32         {d1[0]},  [r1], r4
++        vadd.u8         d2,  d2,  d6
++        vext.8          d19, d21, d21, #1
++        paeth           d3,  d2,  d19, d18
++        vst1.32         {d2[0]},  [r1], r4
++        vmov            d4,  d19
++        vadd.u8         d3,  d3,  d7
++        vst1.32         {d3[0]},  [r1], r4
++        subs            r12, r12, #12
++        bgt             1b
++
++        pop             {r4,pc}
++endfunc
++#endif /* PNG_ARM_NEON_OPT > 0 */
++#endif /* PNG_ARM_NEON_IMPLEMENTATION == 2 (assembler) */
++#endif /* READ */
+diff --git a/Source/LibPNG/arm/filter_neon_intrinsics.c b/Source/LibPNG/arm/filter_neon_intrinsics.c
+new file mode 100644
+index 0000000..d42c788
+--- /dev/null
++++ b/Source/LibPNG/arm/filter_neon_intrinsics.c
+@@ -0,0 +1,373 @@
++
++/* filter_neon_intrinsics.c - NEON optimised filter functions
++ *
++ * Copyright (c) 2014 Glenn Randers-Pehrson
++ * Written by James Yu <james.yu at linaro.org>, October 2013.
++ * Based on filter_neon.S, written by Mans Rullgard, 2011.
++ *
++ * Last changed in libpng 1.6.16 [December 22, 2014]
++ *
++ * This code is released under the libpng license.
++ * For conditions of distribution and use, see the disclaimer
++ * and license in png.h
++ */
++
++#include "../pngpriv.h"
++
++#ifdef PNG_READ_SUPPORTED
++
++/* This code requires -mfpu=neon on the command line: */
++#if PNG_ARM_NEON_IMPLEMENTATION == 1 /* intrinsics code from pngpriv.h */
++
++#include <arm_neon.h>
++
++/* libpng row pointers are not necessarily aligned to any particular boundary,
++ * however this code will only work with appropriate alignment.  arm/arm_init.c
++ * checks for this (and will not compile unless it is done). This code uses
++ * variants of png_aligncast to avoid compiler warnings.
++ */
++#define png_ptr(type,pointer) png_aligncast(type *,pointer)
++#define png_ptrc(type,pointer) png_aligncastconst(const type *,pointer)
++
++/* The following relies on a variable 'temp_pointer' being declared with type
++ * 'type'.  This is written this way just to hide the GCC strict aliasing
++ * warning; note that the code is safe because there never is an alias between
++ * the input and output pointers.
++ */
++#define png_ldr(type,pointer)\
++   (temp_pointer = png_ptr(type,pointer), *temp_pointer)
++
++#if PNG_ARM_NEON_OPT > 0
++
++void
++png_read_filter_row_up_neon(png_row_infop row_info, png_bytep row,
++   png_const_bytep prev_row)
++{
++   png_bytep rp = row;
++   png_bytep rp_stop = row + row_info->rowbytes;
++   png_const_bytep pp = prev_row;
++
++   for (; rp < rp_stop; rp += 16, pp += 16)
++   {
++      uint8x16_t qrp, qpp;
++
++      qrp = vld1q_u8(rp);
++      qpp = vld1q_u8(pp);
++      qrp = vaddq_u8(qrp, qpp);
++      vst1q_u8(rp, qrp);
++   }
++}
++
++void
++png_read_filter_row_sub3_neon(png_row_infop row_info, png_bytep row,
++   png_const_bytep prev_row)
++{
++   png_bytep rp = row;
++   png_bytep rp_stop = row + row_info->rowbytes;
++
++   uint8x16_t vtmp = vld1q_u8(rp);
++   uint8x8x2_t *vrpt = png_ptr(uint8x8x2_t, &vtmp);
++   uint8x8x2_t vrp = *vrpt;
++
++   uint8x8x4_t vdest;
++   vdest.val[3] = vdup_n_u8(0);
++
++   for (; rp < rp_stop;)
++   {
++      uint8x8_t vtmp1, vtmp2;
++      uint32x2_t *temp_pointer;
++
++      vtmp1 = vext_u8(vrp.val[0], vrp.val[1], 3);
++      vdest.val[0] = vadd_u8(vdest.val[3], vrp.val[0]);
++      vtmp2 = vext_u8(vrp.val[0], vrp.val[1], 6);
++      vdest.val[1] = vadd_u8(vdest.val[0], vtmp1);
++
++      vtmp1 = vext_u8(vrp.val[1], vrp.val[1], 1);
++      vdest.val[2] = vadd_u8(vdest.val[1], vtmp2);
++      vdest.val[3] = vadd_u8(vdest.val[2], vtmp1);
++
++      vtmp = vld1q_u8(rp + 12);
++      vrpt = png_ptr(uint8x8x2_t, &vtmp);
++      vrp = *vrpt;
++
++      vst1_lane_u32(png_ptr(uint32_t,rp), png_ldr(uint32x2_t,&vdest.val[0]), 0);
++      rp += 3;
++      vst1_lane_u32(png_ptr(uint32_t,rp), png_ldr(uint32x2_t,&vdest.val[1]), 0);
++      rp += 3;
++      vst1_lane_u32(png_ptr(uint32_t,rp), png_ldr(uint32x2_t,&vdest.val[2]), 0);
++      rp += 3;
++      vst1_lane_u32(png_ptr(uint32_t,rp), png_ldr(uint32x2_t,&vdest.val[3]), 0);
++      rp += 3;
++   }
++
++   PNG_UNUSED(prev_row)
++}
++
++void
++png_read_filter_row_sub4_neon(png_row_infop row_info, png_bytep row,
++   png_const_bytep prev_row)
++{
++   png_bytep rp = row;
++   png_bytep rp_stop = row + row_info->rowbytes;
++
++   uint8x8x4_t vdest;
++   vdest.val[3] = vdup_n_u8(0);
++
++   for (; rp < rp_stop; rp += 16)
++   {
++      uint32x2x4_t vtmp = vld4_u32(png_ptr(uint32_t,rp));
++      uint8x8x4_t *vrpt = png_ptr(uint8x8x4_t,&vtmp);
++      uint8x8x4_t vrp = *vrpt;
++      uint32x2x4_t *temp_pointer;
++
++      vdest.val[0] = vadd_u8(vdest.val[3], vrp.val[0]);
++      vdest.val[1] = vadd_u8(vdest.val[0], vrp.val[1]);
++      vdest.val[2] = vadd_u8(vdest.val[1], vrp.val[2]);
++      vdest.val[3] = vadd_u8(vdest.val[2], vrp.val[3]);
++      vst4_lane_u32(png_ptr(uint32_t,rp), png_ldr(uint32x2x4_t,&vdest), 0);
++   }
++
++   PNG_UNUSED(prev_row)
++}
++
++void
++png_read_filter_row_avg3_neon(png_row_infop row_info, png_bytep row,
++   png_const_bytep prev_row)
++{
++   png_bytep rp = row;
++   png_const_bytep pp = prev_row;
++   png_bytep rp_stop = row + row_info->rowbytes;
++
++   uint8x16_t vtmp;
++   uint8x8x2_t *vrpt;
++   uint8x8x2_t vrp;
++   uint8x8x4_t vdest;
++   vdest.val[3] = vdup_n_u8(0);
++
++   vtmp = vld1q_u8(rp);
++   vrpt = png_ptr(uint8x8x2_t,&vtmp);
++   vrp = *vrpt;
++
++   for (; rp < rp_stop; pp += 12)
++   {
++      uint8x8_t vtmp1, vtmp2, vtmp3;
++
++      uint8x8x2_t *vppt;
++      uint8x8x2_t vpp;
++
++      uint32x2_t *temp_pointer;
++
++      vtmp = vld1q_u8(pp);
++      vppt = png_ptr(uint8x8x2_t,&vtmp);
++      vpp = *vppt;
++
++      vtmp1 = vext_u8(vrp.val[0], vrp.val[1], 3);
++      vdest.val[0] = vhadd_u8(vdest.val[3], vpp.val[0]);
++      vdest.val[0] = vadd_u8(vdest.val[0], vrp.val[0]);
++
++      vtmp2 = vext_u8(vpp.val[0], vpp.val[1], 3);
++      vtmp3 = vext_u8(vrp.val[0], vrp.val[1], 6);
++      vdest.val[1] = vhadd_u8(vdest.val[0], vtmp2);
++      vdest.val[1] = vadd_u8(vdest.val[1], vtmp1);
++
++      vtmp2 = vext_u8(vpp.val[0], vpp.val[1], 6);
++      vtmp1 = vext_u8(vrp.val[1], vrp.val[1], 1);
++
++      vtmp = vld1q_u8(rp + 12);
++      vrpt = png_ptr(uint8x8x2_t,&vtmp);
++      vrp = *vrpt;
++
++      vdest.val[2] = vhadd_u8(vdest.val[1], vtmp2);
++      vdest.val[2] = vadd_u8(vdest.val[2], vtmp3);
++
++      vtmp2 = vext_u8(vpp.val[1], vpp.val[1], 1);
++
++      vdest.val[3] = vhadd_u8(vdest.val[2], vtmp2);
++      vdest.val[3] = vadd_u8(vdest.val[3], vtmp1);
++
++      vst1_lane_u32(png_ptr(uint32_t,rp), png_ldr(uint32x2_t,&vdest.val[0]), 0);
++      rp += 3;
++      vst1_lane_u32(png_ptr(uint32_t,rp), png_ldr(uint32x2_t,&vdest.val[1]), 0);
++      rp += 3;
++      vst1_lane_u32(png_ptr(uint32_t,rp), png_ldr(uint32x2_t,&vdest.val[2]), 0);
++      rp += 3;
++      vst1_lane_u32(png_ptr(uint32_t,rp), png_ldr(uint32x2_t,&vdest.val[3]), 0);
++      rp += 3;
++   }
++}
++
++void
++png_read_filter_row_avg4_neon(png_row_infop row_info, png_bytep row,
++   png_const_bytep prev_row)
++{
++   png_bytep rp = row;
++   png_bytep rp_stop = row + row_info->rowbytes;
++   png_const_bytep pp = prev_row;
++
++   uint8x8x4_t vdest;
++   vdest.val[3] = vdup_n_u8(0);
++
++   for (; rp < rp_stop; rp += 16, pp += 16)
++   {
++      uint32x2x4_t vtmp;
++      uint8x8x4_t *vrpt, *vppt;
++      uint8x8x4_t vrp, vpp;
++      uint32x2x4_t *temp_pointer;
++
++      vtmp = vld4_u32(png_ptr(uint32_t,rp));
++      vrpt = png_ptr(uint8x8x4_t,&vtmp);
++      vrp = *vrpt;
++      vtmp = vld4_u32(png_ptrc(uint32_t,pp));
++      vppt = png_ptr(uint8x8x4_t,&vtmp);
++      vpp = *vppt;
++
++      vdest.val[0] = vhadd_u8(vdest.val[3], vpp.val[0]);
++      vdest.val[0] = vadd_u8(vdest.val[0], vrp.val[0]);
++      vdest.val[1] = vhadd_u8(vdest.val[0], vpp.val[1]);
++      vdest.val[1] = vadd_u8(vdest.val[1], vrp.val[1]);
++      vdest.val[2] = vhadd_u8(vdest.val[1], vpp.val[2]);
++      vdest.val[2] = vadd_u8(vdest.val[2], vrp.val[2]);
++      vdest.val[3] = vhadd_u8(vdest.val[2], vpp.val[3]);
++      vdest.val[3] = vadd_u8(vdest.val[3], vrp.val[3]);
++
++      vst4_lane_u32(png_ptr(uint32_t,rp), png_ldr(uint32x2x4_t,&vdest), 0);
++   }
++}
++
++static uint8x8_t
++paeth(uint8x8_t a, uint8x8_t b, uint8x8_t c)
++{
++   uint8x8_t d, e;
++   uint16x8_t p1, pa, pb, pc;
++
++   p1 = vaddl_u8(a, b); /* a + b */
++   pc = vaddl_u8(c, c); /* c * 2 */
++   pa = vabdl_u8(b, c); /* pa */
++   pb = vabdl_u8(a, c); /* pb */
++   pc = vabdq_u16(p1, pc); /* pc */
++
++   p1 = vcleq_u16(pa, pb); /* pa <= pb */
++   pa = vcleq_u16(pa, pc); /* pa <= pc */
++   pb = vcleq_u16(pb, pc); /* pb <= pc */
++
++   p1 = vandq_u16(p1, pa); /* pa <= pb && pa <= pc */
++
++   d = vmovn_u16(pb);
++   e = vmovn_u16(p1);
++
++   d = vbsl_u8(d, b, c);
++   e = vbsl_u8(e, a, d);
++
++   return e;
++}
++
++void
++png_read_filter_row_paeth3_neon(png_row_infop row_info, png_bytep row,
++   png_const_bytep prev_row)
++{
++   png_bytep rp = row;
++   png_const_bytep pp = prev_row;
++   png_bytep rp_stop = row + row_info->rowbytes;
++
++   uint8x16_t vtmp;
++   uint8x8x2_t *vrpt;
++   uint8x8x2_t vrp;
++   uint8x8_t vlast = vdup_n_u8(0);
++   uint8x8x4_t vdest;
++   vdest.val[3] = vdup_n_u8(0);
++
++   vtmp = vld1q_u8(rp);
++   vrpt = png_ptr(uint8x8x2_t,&vtmp);
++   vrp = *vrpt;
++
++   for (; rp < rp_stop; pp += 12)
++   {
++      uint8x8x2_t *vppt;
++      uint8x8x2_t vpp;
++      uint8x8_t vtmp1, vtmp2, vtmp3;
++      uint32x2_t *temp_pointer;
++
++      vtmp = vld1q_u8(pp);
++      vppt = png_ptr(uint8x8x2_t,&vtmp);
++      vpp = *vppt;
++
++      vdest.val[0] = paeth(vdest.val[3], vpp.val[0], vlast);
++      vdest.val[0] = vadd_u8(vdest.val[0], vrp.val[0]);
++
++      vtmp1 = vext_u8(vrp.val[0], vrp.val[1], 3);
++      vtmp2 = vext_u8(vpp.val[0], vpp.val[1], 3);
++      vdest.val[1] = paeth(vdest.val[0], vtmp2, vpp.val[0]);
++      vdest.val[1] = vadd_u8(vdest.val[1], vtmp1);
++
++      vtmp1 = vext_u8(vrp.val[0], vrp.val[1], 6);
++      vtmp3 = vext_u8(vpp.val[0], vpp.val[1], 6);
++      vdest.val[2] = paeth(vdest.val[1], vtmp3, vtmp2);
++      vdest.val[2] = vadd_u8(vdest.val[2], vtmp1);
++
++      vtmp1 = vext_u8(vrp.val[1], vrp.val[1], 1);
++      vtmp2 = vext_u8(vpp.val[1], vpp.val[1], 1);
++
++      vtmp = vld1q_u8(rp + 12);
++      vrpt = png_ptr(uint8x8x2_t,&vtmp);
++      vrp = *vrpt;
++
++      vdest.val[3] = paeth(vdest.val[2], vtmp2, vtmp3);
++      vdest.val[3] = vadd_u8(vdest.val[3], vtmp1);
++
++      vlast = vtmp2;
++
++      vst1_lane_u32(png_ptr(uint32_t,rp), png_ldr(uint32x2_t,&vdest.val[0]), 0);
++      rp += 3;
++      vst1_lane_u32(png_ptr(uint32_t,rp), png_ldr(uint32x2_t,&vdest.val[1]), 0);
++      rp += 3;
++      vst1_lane_u32(png_ptr(uint32_t,rp), png_ldr(uint32x2_t,&vdest.val[2]), 0);
++      rp += 3;
++      vst1_lane_u32(png_ptr(uint32_t,rp), png_ldr(uint32x2_t,&vdest.val[3]), 0);
++      rp += 3;
++   }
++}
++
++void
++png_read_filter_row_paeth4_neon(png_row_infop row_info, png_bytep row,
++   png_const_bytep prev_row)
++{
++   png_bytep rp = row;
++   png_bytep rp_stop = row + row_info->rowbytes;
++   png_const_bytep pp = prev_row;
++
++   uint8x8_t vlast = vdup_n_u8(0);
++   uint8x8x4_t vdest;
++   vdest.val[3] = vdup_n_u8(0);
++
++   for (; rp < rp_stop; rp += 16, pp += 16)
++   {
++      uint32x2x4_t vtmp;
++      uint8x8x4_t *vrpt, *vppt;
++      uint8x8x4_t vrp, vpp;
++      uint32x2x4_t *temp_pointer;
++
++      vtmp = vld4_u32(png_ptr(uint32_t,rp));
++      vrpt = png_ptr(uint8x8x4_t,&vtmp);
++      vrp = *vrpt;
++      vtmp = vld4_u32(png_ptrc(uint32_t,pp));
++      vppt = png_ptr(uint8x8x4_t,&vtmp);
++      vpp = *vppt;
++
++      vdest.val[0] = paeth(vdest.val[3], vpp.val[0], vlast);
++      vdest.val[0] = vadd_u8(vdest.val[0], vrp.val[0]);
++      vdest.val[1] = paeth(vdest.val[0], vpp.val[1], vpp.val[0]);
++      vdest.val[1] = vadd_u8(vdest.val[1], vrp.val[1]);
++      vdest.val[2] = paeth(vdest.val[1], vpp.val[2], vpp.val[1]);
++      vdest.val[2] = vadd_u8(vdest.val[2], vrp.val[2]);
++      vdest.val[3] = paeth(vdest.val[2], vpp.val[3], vpp.val[2]);
++      vdest.val[3] = vadd_u8(vdest.val[3], vrp.val[3]);
++
++      vlast = vpp.val[3];
++
++      vst4_lane_u32(png_ptr(uint32_t,rp), png_ldr(uint32x2x4_t,&vdest), 0);
++   }
++}
++
++#endif /* PNG_ARM_NEON_OPT > 0 */
++#endif /* PNG_ARM_NEON_IMPLEMENTATION == 1 (intrinsics) */
++#endif /* READ */
+-- 
+2.1.4
+

@@ -1,0 +1,82 @@
+#!/bin/sh
+#
+# nodm: X11 session launcher
+#
+# description: nodm launches an X session for a certain user
+#
+# processname: nodm
+# pidfile: /var/run/nodm.pid
+#
+
+# Source the full profile, so that LD_LIBRARY_PATH is set for nvidia specific
+# includes
+. /etc/profile
+
+PROC=/usr/sbin/nodm
+
+# Sanity checks.
+[ -x $PROC ] || exit 0
+
+RETVAL=0
+PIDFILE=/var/run/nodm.pid
+
+[ -r /etc/default/nodm ] && . /etc/default/nodm
+[ "$NODM_ENABLED" = "true" ] || exit 1
+
+export NODM_USER NODM_X_OPTIONS NODM_MIN_SESSION_TIME NODM_XINIT NODM_XSESSION
+
+start() {
+	echo -n "Starting nodm: "
+
+	start-stop-daemon -x $PROC -p $PIDFILE -b -m -S -- $OPTS
+	RETVAL=$?
+	if [ $RETVAL -eq 0 ]; then
+		echo "done"
+	else
+		echo "failed"
+	fi
+}
+
+stop() {
+	echo -n "Stopping nodm: "
+
+	start-stop-daemon -p $PIDFILE -K
+	RETVAL=$?
+	if [ $RETVAL -eq 0 ]; then
+		echo "done"
+	else
+		echo "failed"
+	fi
+}
+
+status() {
+	echo -n "nodm status: "
+
+	start-stop-daemon -p $PIDFILE -t -K >/dev/null 2>&1
+	RETVAL=$?
+	if [ $RETVAL -eq 0 ]; then
+		echo "running"
+	else
+		echo "stopped"
+	fi
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	status)
+		status
+		;;
+	restart)
+		stop
+		start
+		;;
+	*)
+		echo "Usage: $0 {start|stop|status|restart}"
+		;;
+esac
+exit $RETVAL

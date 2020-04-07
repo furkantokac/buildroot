@@ -1,0 +1,4 @@
+config BR2_PACKAGE_CUDA
+	bool "cuda"
+	help
+		CUDA libraries and utilities

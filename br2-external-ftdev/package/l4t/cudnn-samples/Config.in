@@ -1,0 +1,13 @@
+config BR2_PACKAGE_CUDNN_SAMPLES
+	bool "cudnn-samples"
+	depends on BR2_PACKAGE_CUDNN
+	select BR2_PACKAGE_CUDA
+	select BR2_PACKAGE_LIBFREEIMAGE
+	default y
+	help
+	  The NVIDIA CUDA Deep Neural Network library (cuDNN) is a
+	  GPU-accelerated library of primitives for deep neural
+	  networks.
+
+	  This packages provides example programs demonstrating the
+	  features of libcuDNN.

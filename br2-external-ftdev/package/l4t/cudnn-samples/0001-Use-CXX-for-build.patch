@@ -1,0 +1,30 @@
+From 8eecac6a6507a112baddc79c7ee29092da1e534b Mon Sep 17 00:00:00 2001
+From: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+Date: Tue, 1 Nov 2016 14:06:41 +0100
+Subject: [PATCH 1/2] Use CXX for build
+
+Signed-off-by: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+---
+ Makefile | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 7e64eec..0a5d2d0 100644
+--- a/Makefile
++++ b/Makefile
+@@ -9,10 +9,10 @@ LFLAGS=-L$(CUDA_PATH)/lib64 -L$(CUDNN_PATH) $(LIBS)
+ OBJ = mnistCUDNN.o
+ 
+ %.o: %.cpp $(DEPS)
+-	$(CC) -c -o $@ $< $(CFLAGS)
++	$(CXX) -c -o $@ $< $(CFLAGS)
+ 
+ mnistCUDNN: $(OBJ)
+-	gcc -o $@ $^ $(LFLAGS)
++	$(CXX) -o $@ $^ $(LFLAGS)
+ 
+ clean:
+ 	rm *.o ./mnistCUDNN
+-- 
+2.1.4
+

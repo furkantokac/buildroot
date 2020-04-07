@@ -1,0 +1,21 @@
+config BR2_PACKAGE_OPENCV4TEGRA
+	bool "opencv4tegra"
+	select BR2_PACKAGE_CUDA
+	select BR2_PACKAGE_LIBPNG12
+	select BR2_PACKAGE_JPEG
+	select BR2_PACKAGE_TIFF
+	select BR2_PACKAGE_JASPER
+	select BR2_PACKAGE_FFMPEG12
+	select BR2_PACKAGE_FFMPEG12_SWSCALE
+	select BR2_PACKAGE_LIBGTK2
+	select BR2_PACKAGE_LIBTBB
+	depends on BR2_arm
+	depends on !BR2_PACKAGE_OPENCV
+	help
+		OpenCV4Tegra binary libraries and utilities
+		provided by NVIDIA with optimizations for tegra and CUDA
+		support.
+
+comment "opencv4tegra conflicts with opencv"
+	depends on BR2_arm
+	depends on BR2_PACKAGE_OPENCV

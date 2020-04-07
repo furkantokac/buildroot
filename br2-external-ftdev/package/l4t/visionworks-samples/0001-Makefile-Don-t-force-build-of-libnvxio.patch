@@ -1,0 +1,35 @@
+From a46993b3a70535a8e84670a46d0b2de7f86d6fe6 Mon Sep 17 00:00:00 2001
+From: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+Date: Thu, 27 Oct 2016 14:18:56 +0200
+Subject: [PATCH] Makefile: Don't force build of libnvxio
+
+The top-level Makefile for the visionworks samples always builds
+libnvxio before building the samples.  But the per-sample Makefiles
+handle the dependency on libnvxio better, they build the lib only if it
+doesn't exist already, and they can find the lib as per $(NVXIO_LIBS).
+
+So, just disable the unconditional build of libnvxio in the top-level
+Makefile; by pointing NVXIO_LIBS to a copy of libnvxio.a in staging,
+rebuilding libnvxio can be avoided.
+
+Signed-off-by: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+---
+ usr/share/visionworks/sources/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/usr/share/visionworks/sources/Makefile b/usr/share/visionworks/sources/Makefile
+index 8b7beda..2d6ae51 100644
+--- a/usr/share/visionworks/sources/Makefile
++++ b/usr/share/visionworks/sources/Makefile
+@@ -27,7 +27,7 @@
+ # Project folders
+ PROJECTS := $(shell find . -regextype sed -regex "\./\(samples\|demos\)/.*/Makefile")
+ 
+-%.pr_build: nvxio_build
++%.pr_build:
+ 	+@$(MAKE) -C $(dir $*)
+ 
+ %.pr_clean: nvxio_clean
+-- 
+2.1.4
+

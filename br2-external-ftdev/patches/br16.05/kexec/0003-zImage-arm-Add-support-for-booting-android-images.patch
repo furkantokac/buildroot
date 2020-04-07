@@ -1,0 +1,105 @@
+From e94a630de0c9e77a547263cb619f581166570053 Mon Sep 17 00:00:00 2001
+From: Alban Bedel <alban.bedel@avionic-design.de>
+Date: Wed, 30 Mar 2016 12:52:21 +0200
+Subject: [PATCH v2 2/2] zImage-arm: Add support for booting android images
+
+Add very basic support for booting an android image. The ramdisk and
+command line from the image are only used if none has been given on
+the command line.
+
+Signed-off-by: Alban Bedel <alban.bedel@avionic-design.de>
+---
+ kexec/arch/arm/kexec-zImage-arm.c | 56 +++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 54 insertions(+), 2 deletions(-)
+
+diff --git a/kexec/arch/arm/kexec-zImage-arm.c b/kexec/arch/arm/kexec-zImage-arm.c
+index 0ac194d..3222dd3 100644
+--- a/kexec/arch/arm/kexec-zImage-arm.c
++++ b/kexec/arch/arm/kexec-zImage-arm.c
+@@ -27,6 +27,23 @@ off_t initrd_base = 0, initrd_size = 0;
+ unsigned int kexec_arm_image_size = 0;
+ unsigned long long user_page_offset = (-1ULL);
+ 
++struct android_image {
++	char magic[8];
++	uint32_t kernel_size;
++	uint32_t kernel_addr;
++	uint32_t ramdisk_size;
++	uint32_t ramdisk_addr;
++	uint32_t stage2_size;
++	uint32_t stage2_addr;
++	uint32_t tags_addr;
++	uint32_t page_size;
++	uint32_t reserved1;
++	uint32_t reserved2;
++	char name[16];
++	char command_line[512];
++	uint32_t chksum[8];
++};
++
+ struct tag_header {
+ 	uint32_t size;
+ 	uint32_t tag;
+@@ -328,7 +345,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
+ 	char *modified_cmdline = NULL;
+ 	off_t command_line_len;
+ 	const char *ramdisk;
+-	char *ramdisk_buf;
++	const char *ramdisk_buf;
+ 	int opt;
+ 	int use_atags;
+ 	char *dtb_buf;
+@@ -415,6 +432,41 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
+ 	if (dtb_file)
+ 		dtb_buf = slurp_file(dtb_file, &dtb_length);
+ 
++	/* Handle android images, 2048 is the minimum page size */
++	if (len > 2048 && !strncmp(buf, "ANDROID!", 8)) {
++		const struct android_image *aimg = (const void *)buf;
++		uint32_t page_size = le32_to_cpu(aimg->page_size);
++		uint32_t kernel_size = le32_to_cpu(aimg->kernel_size);
++		uint32_t ramdisk_size = le32_to_cpu(aimg->ramdisk_size);
++		uint32_t stage2_size = le32_to_cpu(aimg->stage2_size);
++		off_t aimg_size = page_size + _ALIGN(kernel_size, page_size) +
++			_ALIGN(ramdisk_size, page_size) + stage2_size;
++
++		if (len < aimg_size) {
++			fprintf(stderr, "Android image size is incorrect\n");
++			return -1;
++		}
++
++		/* Get the kernel */
++		buf = buf + page_size;
++		len = kernel_size;
++
++		/* And the ramdisk if none was given on the command line */
++		if (!ramdisk && ramdisk_size) {
++			initrd_size = ramdisk_size;
++			ramdisk_buf = buf + _ALIGN(kernel_size, page_size);
++		}
++
++		/* Likewise for the command line */
++		if (!command_line && aimg->command_line[0]) {
++			command_line = aimg->command_line;
++			if (command_line[sizeof(aimg->command_line) - 1])
++				command_line_len = sizeof(aimg->command_line);
++			else
++				command_line_len = strlen(command_line) + 1;
++		}
++	}
++
+ 	/*
+ 	 * If we are loading a dump capture kernel, we need to update kernel
+ 	 * command line and also add some additional segments.
+@@ -534,7 +586,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
+ 			initrd_base = initrd_base_new;
+ 		}
+ 
+-		if (ramdisk) {
++		if (ramdisk_buf) {
+ 			add_segment(info, ramdisk_buf, initrd_size,
+ 			            initrd_base, initrd_size);
+ 
+-- 
+2.8.0
+

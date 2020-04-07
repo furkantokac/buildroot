@@ -1,0 +1,13 @@
+config BR2_PACKAGE_VISIONWORKS_SFM
+	bool "visionworks-sfm"
+	default y
+	select BR2_PACKAGE_CUDA
+	depends on BR2_PACKAGE_VISIONWORKS
+	help
+		NVIDIA VisionWorks Plus (SFM) contains platform specific
+		optimized libraries, including SFM, a library of
+		computer vision primitives and algorithms with framework
+		optimized for NVIDIA platforms built on top of NVIDIA
+		VisionWorks and extends its API.
+
+		https://developer.nvidia.com/embedded/visionworks

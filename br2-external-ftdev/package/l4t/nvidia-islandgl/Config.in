@@ -1,0 +1,5 @@
+config BR2_PACKAGE_NVIDIA_ISLANDGL
+	bool "Nvidia IslandGL demo"
+	select BR2_PACKAGE_NVIDIA_DRIVERS
+	help
+		The Nvidia Island GL demo application

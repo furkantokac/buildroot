@@ -1,0 +1,43 @@
+From 43460425b1e2c37463107360005c3ddee723e75b Mon Sep 17 00:00:00 2001
+From: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+Date: Fri, 24 Mar 2017 11:37:06 +0100
+Subject: [PATCH] post.mk: Create dependency makefile by makefile rule
+
+Creating the emmc image requires creating the bct file and the
+bootloader image first.  These dependencies are written to a makefile
+snippet that is created by the gen-image-deps.sh script.  But that
+script is only invoked when the rule that creates the emmc image is run,
+which is too late for creating the dependencies makefile.
+
+Add a rule to post.mk that tells make how to create the dependencies
+makefile; with that in place, make automatically makes the dependency
+makefile before executing any other rules.
+
+Signed-off-by: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+---
+ build/post.mk | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/build/post.mk b/build/post.mk
+index 0e1c766..37550bd 100644
+--- a/build/post.mk
++++ b/build/post.mk
+@@ -21,13 +21,14 @@ bcts: $(bcts)
+ images: $(images)
+ 
+ image_deps := $(addprefix .,$(addsuffix .d,$(images)))
++$(image_deps): .%.d : %.cfg
++	../../../build/gen-image-deps.sh $< $(@:.%.d=%) $@
+ -include $(image_deps)
+ 
+ %.bct: %.bct.cfg
+ 	cbootimage -gbct -$(soc) $< $@
+ 
+ %.img: %.img.cfg
+-	../../../build/gen-image-deps.sh $< $@ .$@.d
+ 	cbootimage -$(soc) $< $@
+ 
+ %.simg: %.img $(skb)
+-- 
+2.1.4
+

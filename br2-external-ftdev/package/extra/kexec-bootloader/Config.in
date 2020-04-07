@@ -1,0 +1,10 @@
+config BR2_PACKAGE_KEXEC_BOOTLOADER
+	bool "kexec-bootloader"
+	select BR2_PACKAGE_SDL
+	select BR2_PACKAGE_SDL_FBCON
+	select BR2_PACKAGE_SDL_TTF
+	select BR2_PACKAGE_FONTCONFIG
+	help
+	  A simple Linux-based bootloader that presents the user
+	  alternative Linux operating systems in a graphical menu. The
+	  selection is then booted with kexec.

@@ -1,0 +1,13 @@
+config BR2_PACKAGE_VISIONWORKS
+	bool "visionworks"
+	select BR2_PACKAGE_CUDA
+	help
+		NVIDIA VisionWorks Toolkit is a CUDA accelerated
+		software development package for computer vision (CV)
+		and image processing. The toolkit is designed to
+		provide a production-quality, standard interface that
+		implements and extends the OpenVX standard, enabling
+		high performance computer vision applications on NVIDIA
+		Tegra devices.
+
+		https://developer.nvidia.com/embedded/visionworks

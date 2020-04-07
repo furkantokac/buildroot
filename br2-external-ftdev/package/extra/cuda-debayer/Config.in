@@ -1,0 +1,33 @@
+config BR2_PACKAGE_CUDA_DEBAYER
+	bool "cuda-debayer"
+	select BR2_PACKAGE_CUDA
+	select BR2_PACKAGE_CUDA_DEBAYER_GL if BR2_PACKAGE_HAS_LIBGL && !BR2_PACKAGE_CUDA_DEBAYER_OPENCV
+	select BR2_PACKAGE_CUDA_DEBAYER_OPENCV if !BR2_PACKAGE_HAS_LIBGL
+	depends on BR2_HOST_CUDA_CROSS_TOOLCHAIN
+
+	help
+	  A debayer image conversion tool using CUDA for accelerated
+	  operation.
+
+if BR2_PACKAGE_CUDA_DEBAYER
+
+config BR2_PACKAGE_CUDA_DEBAYER_GL
+	bool "Enable GL rendering"
+	default y
+	select BR2_PACKAGE_LIBGLU
+	select BR2_PACKAGE_LIBGLEW
+	select BR2_PACKAGE_LIBFREEGLUT
+	depends on BR2_PACKAGE_HAS_LIBGL
+
+comment "cuda-debayer GL backend requires libgl"
+	depends on !BR2_PACKAGE_HAS_LIBGL
+
+config BR2_PACKAGE_CUDA_DEBAYER_OPENCV
+	bool "Enable OpenCV rendering"
+	default n
+	select BR2_PACKAGE_OPENCV4TEGRA
+
+endif
+
+comment "cuda-debayer requires cuda cross-compiling host toolchain"
+	depends on !BR2_HOST_CUDA_CROSS_TOOLCHAIN

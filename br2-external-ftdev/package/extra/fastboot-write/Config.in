@@ -1,0 +1,7 @@
+config BR2_PACKAGE_FASTBOOT_WRITE
+	bool "fastboot-write"
+	help
+	  A small tool to write fastboot image to a block device. Typically
+	  fastboot image are written from the bootloader using an external
+	  programming system connected via USB. This tool instead allow to
+	  write the images in-system.

@@ -1,0 +1,27 @@
+From 05fef852864c0a30e3c0bc52fef9f9316e1ea9e5 Mon Sep 17 00:00:00 2001
+From: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+Date: Fri, 23 Sep 2016 15:44:07 +0200
+Subject: [PATCH] pkgconfig: Add cuda stub library dirs to link
+
+If the stub libraries satisfy the needs, don't force the user to have
+the full libraries installed.
+
+Signed-off-by: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+---
+ _for_staging/usr/lib/pkgconfig/opencv.pc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/_for_staging/usr/lib/pkgconfig/opencv.pc b/_for_staging/usr/lib/pkgconfig/opencv.pc
+index 0cf91f5..d7d9482 100644
+--- a/_for_staging/usr/lib/pkgconfig/opencv.pc
++++ b/_for_staging/usr/lib/pkgconfig/opencv.pc
+@@ -9,5 +9,5 @@ includedir_new=${prefix}/include
+ Name: OpenCV
+ Description: Open Source Computer Vision Library
+ Version: 2.4.13
+-Libs: -L${exec_prefix}/lib -lopencv_calib3d -lopencv_contrib -lopencv_core -lopencv_features2d -lopencv_flann -lopencv_gpu -lopencv_highgui -lopencv_imgproc -lopencv_legacy -lopencv_ml -lopencv_objdetect -lopencv_photo -lopencv_stitching -lopencv_superres -lopencv_ts -lopencv_video -lopencv_videostab -lopencv_detection_based_tracker -lopencv_esm_panorama -lopencv_facedetect -lopencv_imuvstab -lopencv_tegra -lopencv_vstab -L/usr/local/cuda-6.5/lib -lcufft -lnpps -lnppi -lnppc -lcudart -ltbb -lrt -lpthread -lm -ldl
++Libs: -L${exec_prefix}/lib -lopencv_calib3d -lopencv_contrib -lopencv_core -lopencv_features2d -lopencv_flann -lopencv_gpu -lopencv_highgui -lopencv_imgproc -lopencv_legacy -lopencv_ml -lopencv_objdetect -lopencv_photo -lopencv_stitching -lopencv_superres -lopencv_ts -lopencv_video -lopencv_videostab -lopencv_detection_based_tracker -lopencv_esm_panorama -lopencv_facedetect -lopencv_imuvstab -lopencv_tegra -lopencv_vstab -L/usr/local/cuda-6.5/lib/stubs -L/usr/local/cuda-6.5/lib -lcufft -lnpps -lnppi -lnppc -lcudart -ltbb -lrt -lpthread -lm -ldl
+ Cflags: -I${includedir_old} -I${includedir_new}
+-- 
+2.1.4
+

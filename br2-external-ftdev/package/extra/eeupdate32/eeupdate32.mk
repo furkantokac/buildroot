@@ -1,0 +1,27 @@
+EEUPDATE32_VERSION = 2.24.33
+EEUPDATE32_SITE = http://storage.adnet.avionic-design.de/development/projects/1479_CSU/tooling/software/intel-eeupdate/OEM_Mfg
+EEUPDATE32_SOURCE = eeupdate32
+EEUPDATE32_LICENSE = Custom
+EEUPDATE32_REDISTRIBUTE = NO
+
+EEUPDATE32_INSTALL_PREFIX = $(if $(BR2_i386),usr,opt/i386-unknown-linux-gnu)
+
+define EEUPDATE32_EXTRACT_CMDS
+	mkdir -p $(EEUPDATE32_DIR)
+	cp $(DL_DIR)/$(EEUPDATE32_SOURCE) $(EEUPDATE32_DIR)
+endef
+
+define EEUPDATE32_INSTALL_TARGET_CMDS
+	$(INSTALL) -d $(TARGET_DIR)/$(EEUPDATE32_INSTALL_PREFIX)/bin
+	$(INSTALL) -m 755 $(EEUPDATE32_DIR)/$(EEUPDATE32_SOURCE) $(TARGET_DIR)/$(EEUPDATE32_INSTALL_PREFIX)/bin/eeupdate32
+endef
+
+define EEUPDATE32_INSTALL_QEMU_TARGET_CMDS
+	$(INSTALL) -m 755 $(EEUPDATE32_PKGDIR)/eeupdate32.qemu $(TARGET_DIR)/usr/bin/eeupdate32
+endef
+
+ifneq ($(BR2_i386),y)
+EEUPDATE32_POST_INSTALL_TARGET_HOOKS += EEUPDATE32_INSTALL_QEMU_TARGET_CMDS
+endif
+
+$(eval $(generic-package))

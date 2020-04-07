@@ -1,0 +1,238 @@
+From 389e834f33405ba8c97aafb565a6ac90d2b6fcd4 Mon Sep 17 00:00:00 2001
+From: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+Date: Tue, 12 Jan 2016 19:18:55 +0100
+Subject: [PATCH] Support translation of failing virtual memory addresses to
+ physical addresses
+
+Signed-off-by: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+---
+ memtester.8 |   6 +++-
+ memtester.c |   6 +++-
+ memtester.h |   1 +
+ tests.c     | 117 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 128 insertions(+), 2 deletions(-)
+
+diff --git a/memtester.8 b/memtester.8
+index fd80bc7..85147f3 100644
+--- a/memtester.8
++++ b/memtester.8
+@@ -3,7 +3,7 @@
+ memtester \- stress test to find memory subsystem faults.
+ .SH SYNOPSIS
+ .B memtester
+-[\f -p PHYSADDR\fR [\f -d DEVICE\fR]]
++[\f -p PHYSADDR\fR [\f -d DEVICE\fR]] [\f -x\fR]
+ <\fIMEMORY\fR>
+ [\fIITERATIONS\fR]
+ .SH DESCRIPTION
+@@ -57,6 +57,10 @@ a particular region of actual physical memory, arrange to have that memory
+ allocated by your test software, and hold it in this allocated state, then
+ run memtester on it with this option.
+ .TP
++\f -x\fR
++Requests translation of failing virtual memory addresses to physical
++addresses.  This requires read permissions on the device /dev/mem.
++.TP
+ \fIMEMORY\fR
+ the amount of memory to allocate and test, in megabytes by default.  You can
+ include a suffix of B, K, M, or G to indicate bytes, kilobytes, megabytes, or
+diff --git a/memtester.c b/memtester.c
+index 3db2ad4..37f5002 100644
+--- a/memtester.c
++++ b/memtester.c
+@@ -97,6 +97,7 @@ void usage(char *me);
+ 
+ /* Global vars - so tests have access to this information */
+ int use_phys = 0;
++int xlate_phys = 0;
+ off_t physaddrbase = 0;
+ 
+ /* Function definitions */
+@@ -150,7 +151,7 @@ int main(int argc, char **argv) {
+         printf("using testmask 0x%lx\n", testmask);
+     }
+ 
+-    while ((opt = getopt(argc, argv, "p:d:")) != -1) {
++    while ((opt = getopt(argc, argv, "p:d:x")) != -1) {
+         switch (opt) {
+             case 'p':
+                 errno = 0;
+@@ -193,6 +194,9 @@ int main(int argc, char **argv) {
+                     }
+                 }
+                 break;              
++            case 'x':
++                xlate_phys = 1;
++                break;
+             default: /* '?' */
+                 usage(argv[0]); /* doesn't return */
+         }
+diff --git a/memtester.h b/memtester.h
+index 229bca3..f892404 100644
+--- a/memtester.h
++++ b/memtester.h
+@@ -18,5 +18,6 @@
+ /* extern declarations. */
+ 
+ extern int use_phys;
++extern int xlate_phys;
+ extern off_t physaddrbase;
+ 
+diff --git a/tests.c b/tests.c
+index be1b350..fe3f795 100644
+--- a/tests.c
++++ b/tests.c
+@@ -29,12 +29,103 @@ char progress[] = "-\\|/";
+ 
+ /* Function definitions. */
+ 
++#include <fcntl.h>
++#include <unistd.h>
++#include <err.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <stdbool.h>
++#include <string.h>
++#include <inttypes.h>
++#include <sys/mman.h>
++#include <errno.h>
++
++typedef uint64_t mapentry_t;
++
++#define BIT(n)          (1ULL << (n))
++#define PM_PFRAME_MASK  (BIT(55) - 1)
++#define PM_PFRAME(x)    ((x) & PM_PFRAME_MASK)
++#define PM_PRESENT(x)   (!!((x) & BIT(63)))
++
++int vmaddr2phy(uintptr_t *physaddr, uintptr_t vmaddr, const char *pagemap_fname)
++{
++    unsigned long pagesize = sysconf(_SC_PAGESIZE);
++    mapentry_t mapentry;
++    int mapfd, ret;
++
++    if (!pagemap_fname)
++        pagemap_fname = "/proc/self/pagemap";
++    mapfd = open(pagemap_fname, O_RDONLY);
++    if (mapfd < 0) {
++        warn("Opening %s", pagemap_fname);
++        return -errno;
++    }
++
++    ret = pread(mapfd, &mapentry, sizeof(mapentry),
++            (vmaddr / pagesize) * sizeof(mapentry));
++    if (ret < 0) {
++        warn("Reading pagemap");
++        goto closemap;
++    } else if (ret != sizeof mapentry) {
++        warnx("Short read in pagemap: %u byte(s)", ret);
++        ret = -EIO;
++        goto closemap;
++    }
++    ret = 0;
++
++    if (!PM_PRESENT(mapentry)) {
++        ret = -ENOENT;
++        goto closemap;
++    }
++
++    *physaddr = PM_PFRAME(mapentry)*pagesize + vmaddr%pagesize;
++closemap:
++    close(mapfd);
++    return ret;
++}
++
++int read_physical_mem(void *dest, unsigned len,  uintptr_t physaddr)
++{
++    unsigned long pagesize = sysconf(_SC_PAGESIZE);
++    unsigned char *physmem;
++    uintptr_t firstpage;
++    unsigned maplen;
++    int memfd, ret;
++
++    if (len == 0)
++        return 0;
++    ret = 0;
++    memfd = open("/dev/mem", O_RDONLY);
++    if (memfd < 0) {
++        warn("Could not open /dev/mem");
++        return -errno;
++    }
++    firstpage = physaddr & ~(pagesize-1);
++    maplen = ((physaddr % pagesize + len + pagesize-1) / pagesize) *
++        pagesize;
++    physmem = mmap(0, maplen, PROT_READ, MAP_SHARED, memfd,
++            firstpage);
++    if (physmem == MAP_FAILED) {
++        warn("Could not map /dev/mem");
++        ret = -errno;
++        goto closemem;
++    }
++    memcpy(dest, &physmem[physaddr % pagesize], len);
++    munmap(physmem, maplen);
++closemem:
++    close(memfd);
++    return ret;
++}
++
+ int compare_regions(ulv *bufa, ulv *bufb, size_t count) {
+     int r = 0;
+     size_t i;
+     ulv *p1 = bufa;
+     ulv *p2 = bufb;
+     off_t physaddr;
++    uintptr_t pp1, pp2;
++    int mapfd;
++    unsigned long physdata;
+ 
+     for (i = 0; i < count; i++, p1++, p2++) {
+         if (*p1 != *p2) {
+@@ -48,6 +139,22 @@ int compare_regions(ulv *bufa, ulv *bufb, size_t count) {
+                 fprintf(stderr, 
+                         "FAILURE: 0x%08lx != 0x%08lx at offset 0x%08lx.\n", 
+                         (ul) *p1, (ul) *p2, (ul) (i * sizeof(ul)));
++                if (xlate_phys) {
++                    r = vmaddr2phy(&pp1, (uintptr_t)p1, NULL);
++                    if (!r)
++                        r = vmaddr2phy(&pp2, (uintptr_t)p2, NULL);
++                    if (r)
++                        fprintf(stderr, "Error translating to physical addresses\n");
++                    else {
++                        fprintf(stderr, "physical addrs: %p, %p\n", (void*)pp1, (void*)pp2);
++                        r = read_physical_mem(&physdata, sizeof(physdata), pp1);
++                        if (!r)
++                        fprintf(stderr, "Data @ phys1: %#010lx\n", physdata);
++                        r = read_physical_mem(&physdata, sizeof(physdata), pp2);
++                        if (!r)
++                        fprintf(stderr, "Data @ phys2: %#010lx\n", physdata);
++                    }
++                }
+             }
+             /* printf("Skipping to next test..."); */
+             r = -1;
+@@ -61,6 +168,8 @@ int test_stuck_address(ulv *bufa, size_t count) {
+     unsigned int j;
+     size_t i;
+     off_t physaddr;
++    uintptr_t pp1;
++    int r;
+ 
+     printf("           ");
+     fflush(stdout);
+@@ -90,6 +199,14 @@ int test_stuck_address(ulv *bufa, size_t count) {
+                             "FAILURE: possible bad address line at offset "
+                             "0x%08lx.\n", 
+                             (ul) (i * sizeof(ul)));
++                    if (xlate_phys) {
++                        r = vmaddr2phy(&pp1, (uintptr_t)p1, NULL);
++                        if (r)
++                            fprintf(stderr, "Error reading physical addresses\n");
++                        else {
++                            fprintf(stderr, "physical addr: %p\n", (void*)pp1);
++                        }
++                    }
+                 }
+                 printf("Skipping to next test...\n");
+                 fflush(stdout);
+-- 
+2.1.4
+

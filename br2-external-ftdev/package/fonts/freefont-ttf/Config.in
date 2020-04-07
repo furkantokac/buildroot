@@ -1,0 +1,6 @@
+config BR2_PACKAGE_FREEFONT_TTF
+	bool "freefont TTF fonts"
+	help
+		Freefont is a set of free high-quality OpenType fonts
+		covering the UCS character set. These fonts are similar
+		to the widely known Helvetica, Times and Courier fonts.

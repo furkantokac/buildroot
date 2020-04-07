@@ -1,0 +1,30 @@
+#!/bin/sh
+
+test -e /etc/profile && . /etc/profile
+test -e /etc/kexec-bootloader.conf && . /etc/kexec-bootloader.conf
+
+export DISPLAY=:0
+
+case "$1" in
+  restart|reload)
+        echo "$0: action $1 not supported"
+        exit 3
+        ;;
+  start)
+	if test "$KEXEC_BOOTLOADER_GUI_USER" &&
+		cut -d: -f1 /etc/passwd | grep -qF "$KEXEC_BOOTLOADER_GUI_USER"
+	then
+		kexec-boot-loader -u $KEXEC_BOOTLOADER_GUI_USER &
+	else
+		kexec-boot-loader &
+	fi
+        ;;
+  stop)
+	killall -q kexec-boot-loader
+	killall -q kexec-boot-menu
+        ;;
+  *)
+        echo "$0: Usage: $0 stop"
+        exit 3
+        ;;
+esac

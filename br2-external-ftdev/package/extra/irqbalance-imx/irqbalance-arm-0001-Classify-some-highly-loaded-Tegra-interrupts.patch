@@ -1,0 +1,36 @@
+From 0c4890149cf58d963986534f421b9a5f4e8b4df0 Mon Sep 17 00:00:00 2001
+From: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+Date: Mon, 30 Nov 2015 12:38:33 +0100
+Subject: [PATCH] Classify some highly loaded Tegra interrupts
+
+Signed-off-by: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+---
+ classify.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/classify.c b/classify.c
+index 0d5d1c6..2313cae 100644
+--- a/classify.c
++++ b/classify.c
+@@ -61,6 +61,7 @@ static char *legacy_modules[] = {
+ 	"ehci_hcd",
+ 	"EMU10K1",
+ 	"ci_hdrc",
++	"tegra-xhci",
+ 	0
+ };
+ 
+@@ -107,6 +108,10 @@ static char *av_modules[] = {
+ 	"galcore",
+ 	"hdmi",
+ 	"spdif",
++	"host_syncpt",
++	"snd_hda_intel",
++	"gk20a",
++	"tegra12-i2c",
+ 	0
+ };
+ 
+-- 
+2.1.4
+

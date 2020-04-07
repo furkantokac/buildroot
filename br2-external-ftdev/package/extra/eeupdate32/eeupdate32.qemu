@@ -1,0 +1,5 @@
+#!/bin/sh
+
+LIBDIR=/opt/i386-unknown-linux-gnu/lib
+BINDIR=/opt/i386-unknown-linux-gnu/bin
+qemu-i386 $LIBDIR/ld-linux.so.2 --library-path $LIBDIR $BINDIR/eeupdate32 "$@"

@@ -1,0 +1,28 @@
+From 7abfccfc8dbf0769aaf2a07c59bb25be2e729091 Mon Sep 17 00:00:00 2001
+From: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+Date: Wed, 18 Nov 2015 18:10:28 +0100
+Subject: [PATCH] mplayer: Fix build with --enable-libvorbis
+
+When force-enabling vorbis, add vorbis to the LDFLAGS.
+
+Signed-off-by: Nikolaus Schulz <nikolaus.schulz@avionic-design.de>
+---
+ configure | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/configure b/configure
+index 266b5da..a993b42 100755
+--- a/configure
++++ b/configure
+@@ -6543,6 +6543,8 @@ if test "$_libvorbis" = auto; then
+   for vorbislibs in '-lvorbisenc -lvorbis -logg' '-lvorbis -logg' ; do
+     statement_check vorbis/vorbisenc.h 'vorbis_encode_ctl(0, 0, 0); ogg_stream_clear(0)' $vorbislibs && _libvorbis=yes && break
+   done
++elif test "$_libvorbis" = yes; then
++  vorbislibs='-lvorbis -logg'
+ fi
+ if test "$_tremor" = yes ; then
+   _vorbis=yes
+-- 
+2.1.4
+
