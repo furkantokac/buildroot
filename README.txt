@@ -12,7 +12,7 @@ Nvidia Driver Version   : 21.5
 ///
 /// Scripts
 ///
-build-tk1-linux.sh  : Builds regular TK1 image.
+build-tk1-distro.sh : Builds regular TK1 image.
 build-tk1-qt.sh     : Builds static Qt. Run this after build TK1 image.
 
 
