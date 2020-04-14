@@ -22,8 +22,8 @@ QT_FULL_VERSION=$QT_MAIN_VERSION.$QT_SUB_VERSION
 
 # Qt Configure Params
 FT_DEVICE=linux-rasp-pi3-g++
-FT_SYSROOT=$BASE_PATH/buildroot/output/host/usr/arm-buildroot-linux-gnueabihf/sysroot
-FT_CROSS_COMPILE=$BASE_PATH/buildroot/output/host/usr/bin/arm-buildroot-linux-gnueabihf-
+FT_SYSROOT=$BASE_PATH/output/host/usr/arm-buildroot-linux-gnueabihf/sysroot
+FT_CROSS_COMPILE=$BASE_PATH/output/host/usr/bin/arm-buildroot-linux-gnueabihf-
 FT_PREFIX=/usr/lib/qt5      # Prefix that will be for target device
 FT_HOSTPREFIX=../aaaout/    # Compile to where on host device
 FT_EXTPREFIX=$FT_HOSTPREFIX
@@ -51,7 +51,7 @@ cd aaabuild
 
 
 make -j8
-make install
+make install -j8
 
 echo -e "\n#######################DONE##############################################"
 echo ">>> Your QMake is ready on './qt-everywhere-src-$QT_FULL_VERSION/aaaout/bin/qmake'"
