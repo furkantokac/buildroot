@@ -1,0 +1,3 @@
+#! /bin/sh
+
+/root/QmlTestApplication --platform eglfs
