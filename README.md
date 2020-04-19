@@ -9,7 +9,9 @@ Base Buildroot Version  : 2019.02.5
 
 ## Scripts
 
-build-rpi3-qt.sh     : Builds static Qt. Run this after build RPI3 image.
+Name             | Function
+--               | --
+build-rpi3-qt.sh | Builds static Qt. Run this after build RPI3 image.
 
 
 ## Quick Start
@@ -20,5 +22,7 @@ build-rpi3-qt.sh     : Builds static Qt. Run this after build RPI3 image.
 2. make -j8
 3. ./build-rpi3-qt.sh
 
-**RPI3 Image** : output/images/sdcard.img
-**qmake** : output/qt/qt-everywhere-src-*/aaaout/bin/qmake
+Output File | Path
+--          | --
+RPI3 Image  | output/images/sdcard.img
+qmake       | output/qt/qt-everywhere-src-*/aaaout/bin/qmake
