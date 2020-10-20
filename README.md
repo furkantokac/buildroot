@@ -6,6 +6,8 @@ This branch is specialized for Raspberry Pi 3 for now.
 
 Base Buildroot Version  : 2019.02.5
 
+For details, you can read my blogpost: https://furkantokac.com/rpi3-fast-boot-less-than-2-seconds/
+
 
 ## Scripts
 
